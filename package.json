@@ -5,6 +5,7 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
+    "preseed": "npm rebuild better-sqlite3 || true",
     "start": "node server.js",
     "seed": "node db/seed.js"
   },
