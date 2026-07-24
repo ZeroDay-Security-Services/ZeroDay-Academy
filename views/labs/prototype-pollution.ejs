@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrefSync — Merge Preferences</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="proto">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">PrefSync</span><span class="tag">/labs/prototype-pollution</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Update preferences</h1>
+    <p>Submit JSON to merge into your saved preferences (defaults: theme=dark, locale=en-US).</p>
+    <form method="POST" action="/labs/prototype-pollution/merge">
+      <label>Preferences JSON</label>
+      <textarea name="json" rows="5">{"theme":"light"}</textarea>
+      <button type="submit">Merge</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <% if (mergeResult) { %>
+      <p class="lab-meta" style="margin-top:1rem;">Merged object</p>
+      <div class="lab-code"><%= JSON.stringify(mergeResult, null, 2) %></div>
+    <% } %>
+  </div>
+
+  <div class="lab-card">
+    <h2>Global admin check</h2>
+    <p class="lab-meta">This simulates an authorization check elsewhere in the app: <code>{}.isAdmin === true</code></p>
+    <div class="lab-alert <%= isAdminNow ? 'success' : 'info' %>">
+      isAdmin on a fresh object: <strong><%= isAdminNow %></strong>
+      <% if (flag) { %><br>Flag: <span class="lab-flag"><%= flag %></span><% } %>
+    </div>
+    <form method="POST" action="/labs/prototype-pollution/reset"><button type="submit" class="secondary">Reset prototype</button></form>
+  </div>
+  
+
+</body>
+</html>

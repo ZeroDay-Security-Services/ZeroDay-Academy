@@ -1,0 +1,12 @@
+<%- include('_top', { appName: 'InternalTool', pageTitle: 'Record Lookup', theme: 'disclosure', tag: '/labs/disclosure-verbose-errors' }) %>
+<div class="lab-card">
+  <h1>Record lookup</h1>
+  <form method="POST" action="/labs/disclosure-verbose-errors/lookup">
+    <label>ID (leave empty to see what happens)</label>
+    <input name="id" placeholder="">
+    <button type="submit">Lookup</button>
+  </form>
+  <% if (output) { %><div class="lab-code"><%= output %></div><% } %>
+</div>
+
+<%- include('_bottom') %>

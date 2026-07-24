@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<%
+  let estTime = "~30 mins";
+  if (challenge.difficulty === "Trivial") estTime = "~10 mins";
+  else if (challenge.difficulty === "Easy") estTime = "~20 mins";
+  else if (challenge.difficulty === "Medium") estTime = "~45 mins";
+  else if (challenge.difficulty === "Hard") estTime = "~1.5 hours";
+  else if (challenge.difficulty === "Insane") estTime = "2+ hours";
+%>
+<section class="premium-container" style="padding-top: 1.5rem; padding-bottom: 1.5rem;">
+  <a href="/challenges" class="muted-note" style="display:inline-flex; align-items:center; gap:6px; margin-bottom: 1rem; font-weight:500; transition:color 200ms ease;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    All challenges
+  </a>
+
+  <div class="premium-grid">
+    <!-- LEFT PANEL: Overview -->
+    <aside class="glass-strong premium-panel" style="border-radius: var(--radius); display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <span class="badge badge-<%= challenge.difficulty.toLowerCase() %>"><%= challenge.difficulty %></span>
+        <span class="badge badge-owasp"><%= challenge.category %></span>
+        <span class="badge badge-domain"><%= challenge.domain %></span>
+        <span id="solvedBadge" class="badge badge-solved" style="<%= solved ? '' : 'display:none;' %>">✓ Solved</span>
+      </div>
+
+      <div>
+        <h2 style="font-size: clamp(1.4rem, 2.5vw, 1.8rem); margin:0; line-height: 1.2;"><%= challenge.title %></h2>
+        <p class="muted-note mono" style="font-size:0.8rem; margin-top:0.4rem; letter-spacing: 0.02em;"><%= challenge.owaspRef %></p>
+      </div>
+
+      <div class="divider" style="margin: 0;"></div>
+
+      <div>
+        <h3 style="color:var(--text-dim); text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; margin-bottom: 0.6rem;">Description</h3>
+        <p style="max-width: 65ch; line-height:1.6; color:var(--text-primary); font-size: 0.95rem;"><%= challenge.briefing %></p>
+      </div>
+
+      <% if (challenge.hint) { %>
+      <details class="hint-accordion glass" style="padding: 12px 16px; border-radius: var(--radius-sm);">
+        <summary style="cursor: pointer; color: var(--cyan); font-weight: 500; user-select: none; display:flex; align-items:center; gap:8px; font-size: 0.9rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+          Need a Hint? 
+          <span style="font-size: 0.8rem; opacity: 0.7; margin-left:auto;">▼</span>
+        </summary>
+        <p class="muted-note" style="margin-top: 0.8rem; line-height: 1.5; border-top: 1px solid var(--glass-border); padding-top:0.8rem; font-size: 0.9rem;"><%- challenge.hint %></p>
+      </details>
+      <% } %>
+
+      <div class="divider" style="margin: 0;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span class="muted-note" style="text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; font-weight:600;">Reward</span>
+          <span class="pts mono" style="font-size:1.4rem; color:var(--amber); font-weight:700;">+<%= challenge.points %> pts</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px; text-align:right;">
+          <span class="muted-note" style="text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; font-weight:600;">Estimated Time</span>
+          <span style="font-size:1.1rem; color:var(--text-primary); font-weight:500;"><%= estTime %></span>
+        </div>
+      </div>
+
+      <div id="flagSection" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+        <% if (solved) { %>
+          <div class="form-success" id="alreadySolvedMsg" style="margin:0; text-align:center;">Flag captured. Nice work.</div>
+        <% } else { %>
+          <label for="flag" style="display:block; margin-bottom:10px; font-weight:500; font-size:0.85rem;">Submit Flag</label>
+          <div class="flag-box" style="display:flex; gap:8px;">
+            <input id="flag" name="flag" placeholder="ZDS{...}" autocomplete="off" style="flex:1; padding: 0.5rem 0.8rem; font-size: 0.9rem;">
+            <button type="button" id="submitFlagBtn" class="btn btn-primary" style="white-space:nowrap; padding: 0.5rem 1rem;">Submit</button>
+          </div>
+          <div id="flagStatus" class="flag-status" style="margin-top:8px;"></div>
+        <% } %>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: Access -->
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <aside class="glass premium-panel" style="border-radius: var(--radius);">
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom:12px; font-size: 1.1rem;">Challenge Access</h3>
+        
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <span class="metadata-label">Status</span>
+            <span class="metadata-value" style="color: var(--emerald); display:flex; align-items:center; gap:6px;">
+              <span style="width:8px; height:8px; background:var(--emerald); border-radius:50%; display:inline-block; box-shadow:0 0 8px var(--emerald);"></span>
+              Ready
+            </span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Lab Type</span>
+            <span class="metadata-value"><%= challenge.category %></span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Estimated Difficulty</span>
+            <span class="metadata-value"><%= challenge.difficulty %></span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Solve Status</span>
+            <span class="metadata-value" id="completionTimeDisplay"><%= solved ? 'Completed' : 'Pending' %></span>
+          </div>
+        </div>
+
+        <div class="premium-section-spacing" style="margin-top: 24px;">
+          <span class="metadata-label" style="display:block; margin-bottom:8px;">Live Target URL</span>
+          <div class="premium-code-block"><%= challenge.labPath %></div>
+        </div>
+
+        <a href="<%= challenge.labPath %>" id="launchChallengeBtn" target="_blank" rel="noopener" class="btn-premium" style="display: inline-flex; justify-content:center; padding:0.85rem 1.5rem; font-size:1rem; background: var(--cyan); color: #000; border-color: transparent; margin-top: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+          Launch Challenge
+        </a>
+      </aside>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV: Controls -->
+  <div class="premium-bottom-nav">
+    <button id="labPrevBtn" class="btn-premium" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Previous Challenge
+    </button>
+    
+    <!-- Restart button removed by request -->
+    
+    <button id="labNextBtn" class="btn-premium" disabled>
+      Next Challenge
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+</section>
+<%- include('partials/footer') %>
+
+<script>
+(function () {
+  const btn = document.getElementById('submitFlagBtn');
+  const input = document.getElementById('flag');
+  const status = document.getElementById('flagStatus');
+  const solvedBadge = document.getElementById("solvedBadge");
+  const compTimeDisplay = document.getElementById("completionTimeDisplay");
+  const challengeSlug = "<%- challenge.slug %>";
+
+  if (btn) {
+    async function submitFlag() {
+      const flag = input.value.trim();
+      if (!flag) { status.innerHTML = '<div class="form-error">Enter a flag first.</div>'; return; }
+      btn.disabled = true;
+      btn.textContent = 'Checking…';
+      try {
+        const res = await fetch('/challenges/' + challengeSlug + '/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'flag=' + encodeURIComponent(flag)
+        });
+        const data = await res.json();
+        if (data.ok) {
+          if (!data.alreadySolved) {
+            status.innerHTML = '<div class="form-success" style="margin-top:12px;">Correct! +' + data.points + ' points.</div>';
+            solvedBadge.style.display = 'inline-flex';
+            document.getElementById('flagSection').innerHTML = '<div class="form-success" style="margin:0; text-align:center;">Flag captured. Nice work.</div>';
+            
+            compTimeDisplay.textContent = "Completed";
+            compTimeDisplay.style.color = "var(--emerald)";
+          } else {
+            status.innerHTML = '<div class="form-success" style="margin-top:12px;">Already solved.</div>';
+          }
+          
+          const chip = document.querySelector('.points-chip');
+          if (chip && data.points) {
+            const current = parseInt((chip.textContent.match(/\d+/) || [0])[0], 10) || 0;
+            chip.textContent = '⚡ ' + (current + data.points) + ' pts';
+          }
+        } else {
+          status.innerHTML = '<div class="form-error" style="margin-top:12px;">' + data.message + '</div>';
+          btn.disabled = false;
+          btn.textContent = 'Submit';
+        }
+      } catch (e) {
+        status.innerHTML = '<div class="form-error" style="margin-top:12px;">Network error, try again.</div>';
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    }
+
+    btn.addEventListener('click', submitFlag);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitFlag(); });
+  }
+
+  // Lab Controls Logic
+  var currentPath = <%- JSON.stringify(challenge.labPath) %>;
+  fetch('/api/challenge-order').then(function (r) { return r.json(); }).then(function (list) {
+    var idx = list.findIndex(function (c) { return currentPath === c.labPath; });
+    if (idx === -1) return;
+    var prevBtn = document.getElementById('labPrevBtn');
+    var nextBtn = document.getElementById('labNextBtn');
+    
+    if (idx > 0) {
+      prevBtn.disabled = false;
+      prevBtn.title = list[idx - 1].title;
+      prevBtn.addEventListener('click', function () { window.location.href = '/challenges/' + list[idx - 1].slug; });
+    }
+    
+    if (idx < list.length - 1) {
+      nextBtn.disabled = false;
+      nextBtn.title = list[idx + 1].title;
+      nextBtn.addEventListener('click', function () { window.location.href = '/challenges/' + list[idx + 1].slug; });
+    }
+  }).catch(function () {});
+
+})();
+</script>
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+</body>
+</html>

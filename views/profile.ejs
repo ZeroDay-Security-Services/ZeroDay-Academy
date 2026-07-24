@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
+  <div class="hero-eyebrow">Profile</div>
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <div class="avatar-circle"><%= currentUser.username.charAt(0).toUpperCase() %></div>
+    <h2 style="margin:0;"><%= currentUser.username %></h2>
+  </div>
+
+  <div class="lab-shell" style="margin-top:1.5rem;">
+    <div class="glass panel">
+      <h3>Account</h3>
+      <p class="muted-note" style="font-size:0.85rem;">Member since <%= new Date(currentUser.createdAt).toLocaleDateString() %></p>
+      <p class="muted-note" style="font-size:0.85rem;"><%= currentUser.email %></p>
+      <div class="divider"></div>
+      <% if (success) { %><div class="form-success"><%= success %></div><% } %>
+      <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+      <form method="POST" action="/profile">
+        <div class="field">
+          <label for="bio">Bio</label>
+          <textarea id="bio" name="bio" maxlength="280" placeholder="Tell other hackers about yourself..."><%= currentUser.bio %></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save profile</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="stat-grid" style="margin-top:0;">
+        <div class="glass stat"><div class="num"><%= currentUser.points %></div><div class="label">Total points</div></div>
+        <div class="glass stat"><div class="num"><%= solves.length %></div><div class="label">Flags captured</div></div>
+      </div>
+
+      <div class="glass" style="margin-top:1.5rem; padding:0;">
+        <div class="table-scroll">
+        <table>
+          <thead><tr><th>Challenge</th><th>Category</th><th>Difficulty</th><th>Points</th></tr></thead>
+          <tbody>
+            <% solves.forEach(s => { %>
+              <tr>
+                <td><%= s.title %></td>
+                <td class="muted-note"><%= s.category %></td>
+                <td><span class="badge badge-<%= s.difficulty.toLowerCase() %>"><%= s.difficulty %></span></td>
+                <td class="mono" style="color:var(--amber);">+<%= s.points %></td>
+              </tr>
+            <% }) %>
+            <% if (solves.length === 0) { %>
+              <tr><td colspan="4" class="empty-state">No solves yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

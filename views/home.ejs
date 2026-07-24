@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Live vulnerable labs · OWASP Top 10 & beyond</div>
+    <h1>Break real vulnerabilities.<br><span class="gradient-text">Learn how to stop them.</span></h1>
+    <p class="lead">ZeroDay Academy is a hands-on web security training range by <strong>ZeroDay Security Services</strong>. Every challenge is a small, real, deliberately vulnerable web app — exploit it in its own tab, capture the flag, and understand exactly what went wrong in the code.</p>
+    <div class="hero-actions">
+      <% if (currentUser) { %>
+        <a href="/challenges" class="btn btn-primary">Go to challenges</a>
+        <a href="/dashboard" class="btn btn-ghost">View dashboard</a>
+      <% } else { %>
+        <a href="/register" class="btn btn-primary">Create free account</a>
+        <a href="/challenges" class="btn btn-ghost">Preview challenges</a>
+      <% } %>
+    </div>
+
+    <div class="stat-grid">
+      <div class="glass stat"><div class="num"><%= stats.challengeCount %></div><div class="label">Vulnerability labs</div></div>
+      <div class="glass stat"><div class="num"><%= stats.domainCount %></div><div class="label">Attack domains</div></div>
+      <div class="glass stat"><div class="num"><%= stats.userCount %></div><div class="label">Registered hackers</div></div>
+      <div class="glass stat"><div class="num"><%= stats.solveCount %></div><div class="label">Flags captured</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="margin-top:1rem;">
+  <div class="section-head">
+    <h2>How it works</h2>
+  </div>
+  <div class="challenge-grid">
+    <div class="glass panel">
+      <h3 style="color:var(--fuchsia);">01 · Read the briefing</h3>
+      <p>Every lab ships with a short scenario explaining what the target app does and what's broken in it — no guessing at the objective.</p>
+    </div>
+    <div class="glass panel">
+      <h3 style="color:var(--cyan);">02 · Attack the live target</h3>
+      <p>Each challenge opens as a real, running app in its own tab, fully isolated from every other lab. Interact with it exactly like a real pentest target.</p>
+    </div>
+    <div class="glass panel">
+      <h3 style="color:var(--amber);">03 · Capture the flag, climb the board</h3>
+      <p>Come back and submit the flag you extract to earn points instantly, track category progress on your dashboard, and see how you rank.</p>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

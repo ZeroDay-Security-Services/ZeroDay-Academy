@@ -1,0 +1,21 @@
+<%- include('_top', { appName: 'GraphAPI', pageTitle: 'GraphQL Playground', theme: 'api', tag: '/labs/graphql-introspection' }) %>
+<div class="lab-card">
+  <h1>GraphQL playground</h1>
+  <p>Endpoint: <code>POST /labs/graphql-introspection/graphql</code> with body <code>{"query": "..."}</code></p>
+  <form id="gqlForm">
+    <label>Query</label>
+    <textarea id="query" rows="4">{ publicAnnouncements }</textarea>
+    <button type="submit">Run query</button>
+  </form>
+  <div id="out" class="lab-code" style="margin-top:1rem;">—</div>
+</div>
+
+<script>
+document.getElementById('gqlForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const query = document.getElementById('query').value;
+  const res = await fetch('/labs/graphql-introspection/graphql', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ query }) });
+  document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+});
+</script>
+<%- include('_bottom') %>

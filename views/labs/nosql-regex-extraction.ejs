@@ -1,0 +1,28 @@
+<%- include('_top', { appName: 'AccessCorp', pageTitle: 'Code Checker', theme: 'nosql', tag: '/labs/nosql-regex-extraction' }) %>
+<div class="lab-card">
+  <h1>Check an access code pattern</h1>
+  <p>We'll tell you if any stored code matches your pattern (used as a real MongoDB <code>$regex</code>).</p>
+  <form method="POST" action="/labs/nosql-regex-extraction/probe">
+    <label>Pattern</label>
+    <input name="pattern" placeholder="^ZDS">
+    <button type="submit">Probe</button>
+  </form>
+  <% if (matchResult) { %>
+    <div class="lab-alert <%= matchResult.matched ? 'success' : 'error' %>">Pattern <code><%= matchResult.pattern %></code>: <%= matchResult.matched ? 'MATCH' : 'no match' %></div>
+  <% } %>
+</div>
+<div class="lab-card">
+  <h2>Submit reconstructed code</h2>
+  <form method="POST" action="/labs/nosql-regex-extraction/check">
+    <label>Full code</label>
+    <input name="answer" placeholder="ZDS{...}">
+    <button type="submit">Verify</button>
+  </form>
+  <% if (checkResult) { %>
+    <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
+      <% if (checkResult.correct) { %>Correct! Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } else { %>Not quite.<% } %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>

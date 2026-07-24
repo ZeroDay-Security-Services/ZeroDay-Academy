@@ -1,0 +1,21 @@
+<%- include('_top', { appName: 'ReportHub', pageTitle: 'My Reports', theme: 'access', tag: '/labs/file-access-idor · logged in as guest' }) %>
+<div class="lab-card">
+  <h1>My reports</h1>
+  <ul class="lab-list">
+    <% myFiles.forEach(f => { %>
+      <li><%= f.filename %> — <a class="lab-link" href="/labs/file-access-idor/download/<%= f._id %>">view</a> <span class="lab-meta">(id: <%= f._id %>)</span></li>
+    <% }) %>
+  </ul>
+</div>
+<div class="lab-card">
+  <h2>View report by ID</h2>
+  <form method="GET" action="" onsubmit="window.location='/labs/file-access-idor/download/'+this.fid.value; return false;">
+    <label>Report ID</label>
+    <input name="fid" placeholder="Mongo ObjectId">
+    <button type="submit">Fetch</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (file) { %><div class="lab-alert info"><strong><%= file.filename %></strong><br><%= file.content %></div><% } %>
+</div>
+
+<%- include('_bottom') %>

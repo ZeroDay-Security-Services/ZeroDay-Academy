@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
+  <div class="section-head">
+    <div>
+      <div class="hero-eyebrow">Dashboard</div>
+      <h2 style="margin-bottom:0;">Welcome back, <%= currentUser.username %></h2>
+    </div>
+    <a href="/challenges" class="btn btn-primary">Browse challenges</a>
+  </div>
+
+  <div class="stat-grid" style="margin-top:1.5rem;">
+    <div class="glass stat"><div class="num"><%= currentUser.points %></div><div class="label">Total points</div></div>
+    <div class="glass stat"><div class="num">#<%= rank %></div><div class="label">Leaderboard rank</div></div>
+    <div class="glass stat"><div class="num"><%= solves.length %> / <%= totalChallenges %></div><div class="label">Labs solved</div></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>Category progress</h3>
+  <div class="challenge-grid">
+    <% categoryProgress.forEach(cp => { %>
+      <div class="glass panel-tight">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.86rem;">
+          <span><%= cp.category %></span>
+          <span class="mono" style="color:var(--cyan);"><%= cp.solved %>/<%= cp.total %></span>
+        </div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= Math.round((cp.solved/cp.total)*100) %>%;"></div></div>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>Recent solves</h3>
+  <% if (solves.length === 0) { %>
+    <div class="glass empty-state">No flags captured yet. <a href="/challenges">Start your first lab →</a></div>
+  <% } else { %>
+    <div class="glass" style="padding:0;">
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Challenge</th><th>Category</th><th>Points</th><th>Solved</th></tr></thead>
+        <tbody>
+          <% solves.forEach(s => { %>
+            <tr>
+              <td><%= s.title %></td>
+              <td class="muted-note"><%= s.category %></td>
+              <td class="mono" style="color:var(--amber);">+<%= s.points %></td>
+              <td class="muted-note"><%= new Date(s.solvedAt).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  <% } %>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetDiag — Network Diagnostics</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="injection">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">NetDiag Tools</span><span class="tag">/labs/cmd-injection</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Ping a host</h1>
+    <p>Runs a single ICMP ping against the host you provide.</p>
+    <form method="POST" action="/labs/cmd-injection">
+      <label>Hostname or IP</label>
+      <input name="host" value="<%= host %>" placeholder="e.g. 127.0.0.1">
+      <button type="submit">Run ping</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <% if (output) { %>
+      <p class="lab-meta" style="margin-top:1rem;">Output</p>
+      <div class="lab-code"><%= output %></div>
+    <% } %>
+  </div>
+  
+
+</body>
+</html>

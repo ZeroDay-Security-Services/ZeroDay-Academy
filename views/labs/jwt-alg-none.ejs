@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApiGateway — Token Playground</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="auth">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">ApiGateway</span><span class="tag">/labs/jwt-alg-none</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Your issued token</h1>
+    <p class="lab-meta">This is a freshly signed low-privilege token for the <code>guest</code> user.</p>
+    <div class="lab-code"><%= issuedToken %></div>
+  </div>
+
+  <div class="lab-card">
+    <h2>Verify a token</h2>
+    <p>Submit any JWT and the API will verify and decode it.</p>
+    <form method="POST" action="/labs/jwt-alg-none/verify">
+      <label>Token</label>
+      <textarea name="token" rows="3"><%= typeof submittedToken !== 'undefined' ? submittedToken : issuedToken %></textarea>
+      <button type="submit">Verify</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error">Verification failed: <%= error %></div><% } %>
+    <% if (verifyResult) { %>
+      <p class="lab-meta" style="margin-top:1rem;">Decoded payload</p>
+      <div class="lab-code"><%= JSON.stringify(verifyResult, null, 2) %></div>
+    <% } %>
+    <% if (flag) { %>
+      <div class="lab-alert success">Admin claim accepted. Flag: <span class="lab-flag"><%= flag %></span></div>
+    <% } %>
+  </div>
+  
+
+</body>
+</html>

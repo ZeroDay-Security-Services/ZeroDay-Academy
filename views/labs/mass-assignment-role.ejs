@@ -1,0 +1,21 @@
+<%- include('_top', { appName: 'TeamHub', pageTitle: 'Edit Profile', theme: 'access', tag: '/labs/mass-assignment-role' }) %>
+<div class="lab-card">
+  <h1>Edit profile</h1>
+  <p>Current profile: <span class="lab-badge"><%= JSON.stringify(profile) %></span></p>
+  <form id="updateForm">
+    <label>Profile JSON to submit</label>
+    <textarea id="json" rows="4">{"displayName":"guest_user_2"}</textarea>
+    <button type="submit">Update profile</button>
+  </form>
+  <% if (flag) { %><div class="lab-alert success" style="margin-top:1rem;">Role is admin! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+</div>
+
+<script>
+document.getElementById('updateForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const json = document.getElementById('json').value;
+  await fetch('/labs/mass-assignment-role/update', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'json=' + encodeURIComponent(json) });
+  location.reload();
+});
+</script>
+<%- include('_bottom') %>

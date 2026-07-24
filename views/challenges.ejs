@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
+  <div class="hero-eyebrow">Challenge catalog</div>
+  <h2>All labs</h2>
+  <p class="muted-note">Each card opens a real, isolated vulnerable target in a new tab. Attack it, then come back here to submit the flag.</p>
+
+  <div class="filter-bar" id="filterBar">
+    <span class="filter-chip active" data-domain="all">All (<%= challenges.length %>)</span>
+    <% domains.forEach(d => { %>
+      <span class="filter-chip" data-domain="<%= d %>"><%= d %></span>
+    <% }) %>
+  </div>
+
+  <div class="challenge-grid" id="challengeGrid">
+    <% challenges.forEach(c => { %>
+      <a class="challenge-card glass" data-domain="<%= c.domain %>" style="--card-glow: var(--<%= c.color %>, var(--violet));" href="/challenges/<%= c.slug %>">
+        <div class="row-top">
+          <div>
+            <h3><%= c.title %><% if (c.solved) { %> <span class="badge badge-solved">✓</span><% } %></h3>
+            <div class="cat"><%= c.owaspRef %></div>
+          </div>
+          <span class="badge badge-<%= c.difficulty.toLowerCase() %>"><%= c.difficulty %></span>
+        </div>
+        <p class="desc"><%= c.summary %></p>
+        <div class="row-bottom">
+          <span class="badge badge-owasp"><%= c.domain %></span>
+          <span class="pts">+<%= c.points %> pts</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>
+<%- include('partials/footer') %>
+
+<script>
+  const chips = document.querySelectorAll('.filter-chip');
+  const cards = document.querySelectorAll('.challenge-card');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const domain = chip.dataset.domain;
+      cards.forEach(card => {
+        card.style.display = (domain === 'all' || card.dataset.domain === domain) ? '' : 'none';
+      });
+    });
+  });
+</script>
+</body>
+</html>

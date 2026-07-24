@@ -1,0 +1,20 @@
+<%- include('_top', { appName: 'QuickCart', pageTitle: 'Coupon Redemption', theme: 'logic', tag: '/labs/logic-coupon-race' }) %>
+<div class="lab-card">
+  <h1>Redeem WELCOME10 (single use)</h1>
+  <div class="lab-alert info">Uses remaining on the server: <%= usesRemaining %></div>
+  <div class="lab-alert info">Your successful redemptions this session: <%= successfulRedemptions %></div>
+  <% if (flag) { %><div class="lab-alert success">Double-spent! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+  <button id="fireBtn">Fire 10 concurrent redeem requests</button>
+  <div id="out" style="margin-top:0.8rem;"></div>
+  <form method="POST" action="/labs/logic-coupon-race/reset" style="margin-top:1rem;"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+
+<script>
+document.getElementById('fireBtn').addEventListener('click', async function () {
+  const requests = Array.from({length: 10}, () => fetch('/labs/logic-coupon-race/redeem', { method: 'POST' }).then(r => r.json()));
+  const results = await Promise.all(requests);
+  document.getElementById('out').innerHTML = '<div class="lab-code">' + JSON.stringify(results, null, 2) + '</div>';
+  setTimeout(() => location.reload(), 800);
+});
+</script>
+<%- include('_bottom') %>

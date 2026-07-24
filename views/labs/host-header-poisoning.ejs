@@ -1,0 +1,21 @@
+<%- include('_top', { appName: 'AccountCare', pageTitle: 'Password Reset', theme: 'headers', tag: '/labs/host-header-poisoning' }) %>
+<div class="lab-card">
+  <h1>Request a password reset link</h1>
+  <p>The reset email link is built from this request's own Host header.</p>
+  <button onclick="sendReset()">Request reset link</button>
+  <div id="out" style="margin-top:1rem;"></div>
+</div>
+
+<div class="lab-code">curl -X POST -H "Host: evil-attacker.test" http://localhost:PORT/labs/host-header-poisoning/request-reset</div>
+<script>
+async function sendReset() {
+  const res = await fetch('/labs/host-header-poisoning/request-reset', { method: 'POST' });
+  const html = await res.text();
+  document.getElementById('out').innerHTML = new DOMParser().parseFromString(html, 'text/html').getElementById('resultBox').outerHTML;
+}
+</script>
+<div id="resultBoxWrap" style="display:none;">
+  <div id="resultBox" class="lab-alert info">
+  </div>
+</div>
+<%- include('_bottom') %>

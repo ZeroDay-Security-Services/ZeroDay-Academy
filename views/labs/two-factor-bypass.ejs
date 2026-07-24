@@ -1,0 +1,45 @@
+<%- include('_top', { appName: 'SecureCorp SSO', pageTitle: 'Login', theme: 'auth', tag: '/labs/two-factor-bypass' }) %>
+<% if (!step1Done) { %>
+<div class="lab-card">
+  <h1>Step 1: Username &amp; password</h1>
+  <form method="POST" action="/labs/two-factor-bypass/step1">
+    <label>Username</label>
+    <input name="username" placeholder="admin">
+    <label>Password</label>
+    <input name="password" type="password" placeholder="adminpass">
+    <button type="submit">Continue</button>
+  </form>
+</div>
+<% } else { %>
+<div class="lab-card">
+  <h1>Step 2: One-time passcode</h1>
+  <form id="otpForm">
+    <label>6-digit OTP</label>
+    <input id="otp" name="otp" placeholder="000000">
+    <button type="submit">Verify</button>
+  </form>
+</div>
+<% } %>
+<% if (result && result.error) { %><div class="lab-alert error"><%= result.error %></div><% } %>
+<% if (result && result.success !== undefined) { %>
+  <div class="lab-alert <%= result.success ? 'success' : 'error' %>">
+    <%= result.success ? '2FA verified!' : 'Incorrect OTP.' %>
+    <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+  </div>
+<% } %>
+
+<script>
+const form = document.getElementById('otpForm');
+if (form) {
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const otp = document.getElementById('otp').value;
+    const res = await fetch('/labs/two-factor-bypass/step2', {
+      method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'otp=' + encodeURIComponent(otp)
+    });
+    document.open(); document.write(await res.text()); document.close();
+  });
+}
+</script>
+<%- include('_bottom') %>

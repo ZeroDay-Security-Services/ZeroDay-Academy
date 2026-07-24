@@ -1,0 +1,17 @@
+<%- include('_top', { appName: 'NotifyHub', pageTitle: 'Webhook Test', theme: 'ssrf', tag: '/labs/ssrf-webhook' }) %>
+<div class="lab-card">
+  <h1>Test your webhook URL</h1>
+  <p>We'll send a test ping to the URL you provide and show you the response.</p>
+  <form method="POST" action="/labs/ssrf-webhook">
+    <label>Webhook URL</label>
+    <input name="url" value="<%= url %>" placeholder="https://example.com/hook">
+    <button type="submit">Test</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (result) { %>
+    <p class="lab-meta" style="margin-top:1rem;">Response (status <%= result.status %>, via <%= result.via %>)</p>
+    <div class="lab-code"><%= result.body %></div>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>

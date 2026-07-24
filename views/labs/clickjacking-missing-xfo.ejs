@@ -1,0 +1,15 @@
+<%- include('_top', { appName: 'AccountCare', pageTitle: 'Danger Zone', theme: 'headers', tag: '/labs/clickjacking-missing-xfo' }) %>
+<div class="lab-card">
+  <h1>Danger zone</h1>
+  <% if (deleted) { %>
+    <div class="lab-alert success">Account deleted. Flag: <span class="lab-flag">ZDS{cl1ckj4ck1ng_st34ls_r34l_cl1cks}</span></div>
+  <% } else { %>
+    <form method="POST" action="/labs/clickjacking-missing-xfo/delete-account">
+      <button type="submit" class="danger">Delete my account</button>
+    </form>
+  <% } %>
+</div>
+<% if (!framed) { %>
+
+<% } %>
+<%- include('_bottom') %>

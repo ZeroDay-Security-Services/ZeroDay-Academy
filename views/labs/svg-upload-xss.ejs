@@ -1,0 +1,35 @@
+<%- include('_top', { appName: 'PixelHost', pageTitle: 'Avatar Gallery', theme: 'xss', tag: '/labs/svg-upload-xss' }) %>
+<div class="lab-card">
+  <h1>Upload an avatar (SVG allowed)</h1>
+  <% if (uploaded) { %><div class="lab-alert success">Uploaded.</div><% } %>
+  <form id="uploadForm">
+    <label>Filename</label>
+    <input id="filename" value="avatar.svg">
+    <label>SVG content</label>
+    <textarea id="svgBody" rows="6"><?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg></textarea>
+    <button type="submit">Upload</button>
+  </form>
+</div>
+<div class="lab-card">
+  <h2>Gallery</h2>
+  <ul class="lab-list">
+    <% files.forEach(f => { %>
+      <li><%= f.filename %> — <a class="lab-link" href="/labs/svg-upload-xss/raw/<%= f._id %>" target="_blank">open directly ↗</a></li>
+    <% }) %>
+    <% if (files.length === 0) { %><li class="lab-meta">No uploads yet.</li><% } %>
+  </ul>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const filename = document.getElementById('filename').value || 'avatar.svg';
+  const body = document.getElementById('svgBody').value;
+  await fetch('/labs/svg-upload-xss/upload?filename=' + encodeURIComponent(filename), {
+    method: 'POST', headers: { 'Content-Type': 'image/svg+xml' }, body
+  });
+  location.reload();
+});
+</script>
+<%- include('_bottom') %>

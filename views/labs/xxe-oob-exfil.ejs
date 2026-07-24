@@ -1,0 +1,45 @@
+<%- include('_top', { appName: 'HRSuite', pageTitle: 'Blind Profile Import', theme: 'xxe', tag: '/labs/xxe-oob-exfil' }) %>
+<div class="lab-card">
+  <h1>Import profile XML (async processing)</h1>
+  <p>This importer never shows parsed content back to you -- results are processed asynchronously. But it does fetch any externally referenced DTD.</p>
+  <form method="POST" action="/labs/xxe-oob-exfil/import">
+    <label>XML</label>
+    <textarea name="xml" rows="6"><%= xmlSample %></textarea>
+    <button type="submit">Import</button>
+  </form>
+  <% if (result) { %>
+    <div class="lab-alert <%= result.error ? 'error' : 'info' %>"><%= result.error || result.message %></div>
+  <% } %>
+</div>
+
+<div class="lab-card">
+  <h2>Your hosted DTD (at <code>/labs/xxe-oob-exfil/evil.dtd</code>)</h2>
+  <form method="POST" action="/labs/xxe-oob-exfil/craft-dtd">
+    <label>DTD content</label>
+    <textarea name="dtd" rows="4"><%= dtd %></textarea>
+    <button type="submit" class="secondary">Save DTD</button>
+  </form>
+  <p class="lab-meta">The simplified syntax this lab understands: a <code>FILE:&lt;name&gt;</code> token inside your collector URL gets replaced with the contents of that file on the target, then the app makes a real outbound request to your (edited) URL carrying that data.</p>
+</div>
+
+<div class="lab-card">
+  <h2>Collector</h2>
+  <p class="lab-meta">Check what your collector endpoint has received:</p>
+  <button onclick="checkCollector()">Check collector</button>
+  <div id="collectorResult" style="margin-top:0.8rem;"></div>
+</div>
+<script>
+async function checkCollector() {
+  const res = await fetch('/labs/xxe-oob-exfil/check');
+  const data = await res.json();
+  const el = document.getElementById('collectorResult');
+  if (data.flag) {
+    el.innerHTML = '<div class="lab-alert success">Received: ' + data.received + '<br>Flag: <span class="lab-flag">' + data.flag + '</span></div>';
+  } else if (data.received) {
+    el.innerHTML = '<div class="lab-alert info">Received: ' + data.received + '</div>';
+  } else {
+    el.innerHTML = '<div class="lab-alert error">Nothing received yet.</div>';
+  }
+}
+</script>
+<%- include('_bottom') %>

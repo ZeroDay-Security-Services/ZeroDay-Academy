@@ -1,0 +1,17 @@
+<%- include('_top', { appName: 'NoteVault', pageTitle: 'My Notes', theme: 'access', tag: '/labs/horizontal-privesc · logged in as alice' }) %>
+<div class="lab-card">
+  <h1>My private note</h1>
+  <div class="lab-alert info"><%= myNote %></div>
+</div>
+<div class="lab-card">
+  <h2>Look up a note by username</h2>
+  <form method="GET" action="" onsubmit="window.location='/labs/horizontal-privesc/note/'+this.u.value; return false;">
+    <label>Username</label>
+    <input name="u" placeholder="alice">
+    <button type="submit">View</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (note) { %><div class="lab-alert success"><strong><%= username %>'s note:</strong> <%= note.note %></div><% } %>
+</div>
+
+<%- include('_bottom') %>

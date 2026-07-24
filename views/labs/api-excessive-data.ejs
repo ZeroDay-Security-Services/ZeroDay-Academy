@@ -1,0 +1,12 @@
+<%- include('_top', { appName: 'TeamHub API', pageTitle: 'Employee Directory', theme: 'api', tag: '/labs/api-excessive-data' }) %>
+<div class="lab-card">
+  <h1>Employee directory</h1>
+  <div id="card" class="lab-alert info">Loading…</div>
+</div>
+<p class="lab-meta">The UI card only shows name and title. But what does the raw API response contain? Try: <a class="lab-link" href="/labs/api-excessive-data/api/profile/u_2291" target="_blank">/labs/api-excessive-data/api/profile/u_2291 ↗</a></p>
+<script>
+fetch('/labs/api-excessive-data/api/profile/u_2291').then(r => r.json()).then(d => {
+  document.getElementById('card').innerHTML = '<strong>' + d.name + '</strong><br>' + d.title;
+});
+</script>
+<%- include('_bottom') %>

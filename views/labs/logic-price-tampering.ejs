@@ -1,0 +1,24 @@
+<%- include('_top', { appName: 'GearMarket', pageTitle: 'Checkout', theme: 'logic', tag: '/labs/logic-price-tampering' }) %>
+<div class="lab-card">
+  <h1>Prototype Zero-Day Scanner -- $1,200.00</h1>
+  <form id="checkoutForm">
+    <input type="hidden" id="price" value="1200">
+    <button type="submit">Buy now</button>
+  </form>
+  <% if (result) { %>
+    <div class="lab-alert <%= result.flag ? 'success' : 'info' %>">
+      Charged: $<%= result.charged %>
+      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+document.getElementById('checkoutForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const price = document.getElementById('price').value;
+  const res = await fetch('/labs/logic-price-tampering/checkout', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'price=' + encodeURIComponent(price) });
+  document.open(); document.write(await res.text()); document.close();
+});
+</script>
+<%- include('_bottom') %>

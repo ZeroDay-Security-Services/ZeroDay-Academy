@@ -1,0 +1,17 @@
+<%- include('_top', { appName: 'VaultDoor', pageTitle: 'PIN Access', theme: 'auth', tag: '/labs/no-rate-limit-bruteforce' }) %>
+<div class="lab-card">
+  <h1>Enter your 4-digit PIN</h1>
+  <form method="POST" action="/labs/no-rate-limit-bruteforce/try-pin">
+    <label>PIN</label>
+    <input name="pin" maxlength="4" placeholder="0000">
+    <button type="submit">Unlock</button>
+  </form>
+  <% if (result) { %>
+    <div class="lab-alert <%= result.correct ? 'success' : 'error' %>">
+      <%= result.correct ? 'Correct PIN!' : 'Incorrect PIN.' %>
+      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>

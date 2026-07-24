@@ -1,0 +1,14 @@
+<%- include('_top', { appName: 'PixelHost', pageTitle: 'SVG Avatar', theme: 'xxe', tag: '/labs/xxe-svg-upload' }) %>
+<div class="lab-card">
+  <h1>Upload an SVG avatar</h1>
+  <p>We extract the <code>&lt;title&gt;</code> for accessible alt-text.</p>
+  <form method="POST" action="/labs/xxe-svg-upload">
+    <label>SVG content</label>
+    <textarea name="svg" rows="8"><%= svgInput %></textarea>
+    <button type="submit">Upload</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (altText) { %><div class="lab-alert success">Extracted alt text: <%= altText %></div><% } %>
+</div>
+
+<%- include('_bottom') %>

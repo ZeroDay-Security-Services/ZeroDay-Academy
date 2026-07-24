@@ -1,0 +1,30 @@
+<%- include('_top', { appName: 'FileDrop', pageTitle: 'Upload', theme: 'upload', tag: '/labs/upload-path-traversal' }) %>
+<div class="lab-card">
+  <h1>Upload a file</h1>
+  <form id="uploadForm">
+    <label>Filename</label>
+    <input id="filename" value="notes.txt">
+    <label>Content</label>
+    <textarea id="content" rows="3">hello</textarea>
+    <button type="submit">Upload</button>
+  </form>
+</div>
+<div class="lab-card">
+  <h2>uploads/</h2>
+  <ul class="lab-list"><% uploaded.forEach(f => { %><li><%= f %></li><% }) %></ul>
+  <h2 style="margin-top:1.2rem;">protected/ (should be untouched by uploads)</h2>
+  <ul class="lab-list"><% protectedFiles.forEach(f => { %><li><%= f %></li><% }) %></ul>
+  <% if (flag) { %><div class="lab-alert success" style="margin-top:1rem;">You wrote into protected/! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+  <form method="POST" action="/labs/upload-path-traversal/reset" style="margin-top:1rem;"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const filename = document.getElementById('filename').value;
+  const content = document.getElementById('content').value;
+  await fetch('/labs/upload-path-traversal/upload?filename=' + encodeURIComponent(filename), { method: 'POST', headers: {'Content-Type':'text/plain'}, body: content });
+  location.reload();
+});
+</script>
+<%- include('_bottom') %>

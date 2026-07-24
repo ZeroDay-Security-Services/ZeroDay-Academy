@@ -1,0 +1,17 @@
+<%- include('_top', { appName: 'MarketingSite', pageTitle: isAdminPage ? 'Admin Panel' : 'Home', theme: 'access', tag: '/labs/forced-browse-admin' }) %>
+<% if (!isAdminPage) { %>
+  <div class="lab-card">
+    <h1>Welcome to MarketingSite</h1>
+    <p>A public marketing site with no visible login or admin link anywhere.</p>
+  </div>
+  
+  <div class="lab-card">
+    <p class="lab-meta" style="font-size:0.7rem; opacity:0.4;"><!-- TODO: remove before launch: /panel-x29a --></p>
+  </div>
+<% } else { %>
+  <div class="lab-card">
+    <h1>🔓 Admin Panel</h1>
+    <div class="lab-alert success">No authentication was required to reach this page. Flag: <span class="lab-flag"><%= flag %></span></div>
+  </div>
+<% } %>
+<%- include('_bottom') %>

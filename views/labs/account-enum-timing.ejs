@@ -1,0 +1,31 @@
+<%- include('_top', { appName: 'ApiGateway', pageTitle: 'Login', theme: 'auth', tag: '/labs/account-enum-timing' }) %>
+<div class="lab-card">
+  <h1>Login</h1>
+  <form method="POST" action="/labs/account-enum-timing/login">
+    <label>Username</label>
+    <input name="username" placeholder="try: admin, or something random">
+    <label>Password</label>
+    <input name="password" type="password" placeholder="anything">
+    <button type="submit">Sign in</button>
+  </form>
+  <% if (result && result.elapsedMs !== undefined) { %>
+    <div class="lab-alert error"><%= result.message %></div>
+    <div class="lab-alert info">Server processing time: <strong><%= result.elapsedMs %>ms</strong></div>
+  <% } %>
+</div>
+<div class="lab-card">
+  <h2>Confirm your finding</h2>
+  <form method="POST" action="/labs/account-enum-timing/check-username">
+    <label>Username you believe is valid</label>
+    <input name="guess" placeholder="admin">
+    <button type="submit">Check</button>
+  </form>
+  <% if (result && result.checkOnly) { %>
+    <div class="lab-alert <%= result.valid ? 'success' : 'error' %>">
+      <%= result.valid ? 'Correct -- that account exists.' : 'Not a valid account.' %>
+      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>

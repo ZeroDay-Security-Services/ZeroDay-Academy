@@ -1,0 +1,4 @@
+// billing.js.bak -- old version, superseded, left on disk by mistake
+const STRIPE_TEST_KEY = "sk_test_not_real";
+const INTERNAL_ADMIN_OVERRIDE_CODE = "ZDS{b4ckup_f1l3s_l34v3_s3cr3ts_b3h1nd}";
+module.exports = { STRIPE_TEST_KEY, INTERNAL_ADMIN_OVERRIDE_CODE };

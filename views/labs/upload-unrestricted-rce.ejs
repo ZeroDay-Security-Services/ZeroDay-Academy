@@ -1,0 +1,38 @@
+<%- include('_top', { appName: 'WidgetForge', pageTitle: 'Custom Plugins', theme: 'upload', tag: '/labs/upload-unrestricted-rce' }) %>
+<div class="lab-card">
+  <h1>Upload a custom widget plugin</h1>
+  <form id="uploadForm">
+    <label>Filename</label>
+    <input id="filename" value="widget.js">
+    <label>Plugin JS</label>
+    <textarea id="code" rows="4">// this plugin does nothing yet</textarea>
+    <button type="submit">Upload</button>
+  </form>
+</div>
+<div class="lab-card">
+  <h2>Uploaded plugins</h2>
+  <ul class="lab-list" id="fileList">
+    <% files.forEach(f => { %>
+      <li><%= f.filename %> <button class="secondary" onclick="runPlugin('<%= f._id %>')">Run</button></li>
+    <% }) %>
+  </ul>
+  <div id="out" class="lab-code" style="margin-top:0.8rem; display:none;"></div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const filename = document.getElementById('filename').value;
+  const code = document.getElementById('code').value;
+  await fetch('/labs/upload-unrestricted-rce/upload?filename=' + encodeURIComponent(filename), { method: 'POST', headers: {'Content-Type':'text/plain'}, body: code });
+  location.reload();
+});
+async function runPlugin(id) {
+  const res = await fetch('/labs/upload-unrestricted-rce/run/' + id, { method: 'POST' });
+  const data = await res.json();
+  const out = document.getElementById('out');
+  out.style.display = 'block';
+  out.textContent = data.output + (data.flag ? '\nFlag: ' + data.flag : '');
+}
+</script>
+<%- include('_bottom') %>

@@ -1,0 +1,12 @@
+<%- include('_top', { appName: 'OpsConsole', pageTitle: 'Dashboard', theme: 'access', tag: '/labs/vertical-privesc · role: user' }) %>
+<div class="lab-card">
+  <h1>User dashboard</h1>
+  <p>You're signed in with a standard <code>user</code> role. There's no admin link here -- but is there an admin action?</p>
+</div>
+<% if (actionTaken) { %>
+  <div class="lab-card">
+    <div class="lab-alert success">Admin action executed successfully. Flag: <span class="lab-flag"><%= flag %></span></div>
+  </div>
+<% } %>
+
+<%- include('_bottom') %>

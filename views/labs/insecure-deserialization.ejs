@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyAccount — Session</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="deser">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">MyAccount</span><span class="tag">/labs/insecure-deserialization</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Your session</h1>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <% if (session) { %>
+      <table class="lab-table">
+        <tr><th>Field</th><th>Value</th></tr>
+        <% Object.entries(session).forEach(([k,v]) => { %>
+          <tr><td><%= k %></td><td><%= v %></td></tr>
+        <% }) %>
+      </table>
+    <% } %>
+    <% if (flag) { %>
+      <div class="lab-alert success" style="margin-top:1rem;">Admin role recognized. Flag: <span class="lab-flag"><%= flag %></span></div>
+    <% } %>
+  </div>
+
+  <div class="lab-card">
+    <p class="lab-meta">Your <code>rememberMe</code> cookie is <code>base64(JSON.stringify(session))</code> with no signature. Example of the current shape:</p>
+    <div class="lab-code"><%= exampleCookie %></div>
+    <p class="lab-meta">Decode it, change <code>role</code> to <code>admin</code>, re-encode as base64, and set it as your <code>rememberMe</code> cookie (via devtools or your browser's cookie editor) before reloading this page.</p>
+    <form method="POST" action="/labs/insecure-deserialization/reset"><button type="submit" class="secondary">Reset cookie</button></form>
+  </div>
+
+</body>
+</html>

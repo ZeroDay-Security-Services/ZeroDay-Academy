@@ -1,0 +1,31 @@
+<%- include('_top', { appName: 'VaultLookup', pageTitle: 'Vault Filter', theme: 'nosql', tag: '/labs/nosql-expr-injection' }) %>
+<div class="lab-card">
+  <h1>Vault existence check</h1>
+  <p>Submit a raw filter fragment (JSON) merged into a real query against the vault collection. Only whether a match exists is shown.</p>
+  <form method="POST" action="/labs/nosql-expr-injection/probe">
+    <label>Filter JSON</label>
+    <textarea name="filter" rows="3">{"data.name":"vault-1"}</textarea>
+    <button type="submit">Probe</button>
+  </form>
+  <% if (matchResult) { %>
+    <% if (matchResult.error) { %><div class="lab-alert error"><%= matchResult.error %></div><% } %>
+    <% if (matchResult.matched !== undefined) { %><div class="lab-alert <%= matchResult.matched ? 'success' : 'error' %>">Filter <code><%= matchResult.filter %></code>: <%= matchResult.matched ? 'MATCH' : 'no match' %></div><% } %>
+  <% } %>
+</div>
+<div class="lab-card">
+  <h2>Submit reconstructed secret</h2>
+  <form method="POST" action="/labs/nosql-expr-injection/check">
+    <label>Full secret</label>
+    <input name="answer" placeholder="ZDS{...}">
+    <button type="submit">Verify</button>
+  </form>
+  <% if (checkResult) { %>
+    <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
+      <% if (checkResult.correct) { %>Correct! Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } else { %>Not quite.<% } %>
+    </div>
+  <% } %>
+</div>
+
+<div class="lab-code">{"$expr": {"$eq": [{"$substrCP": ["$data.secret", 0, 1]}, "Z"]}}</div>
+<p class="lab-meta">That probes whether the first character of the (never-exposed) <code>secret</code> field is <code>Z</code>. Extend the range to check each subsequent character.</p>
+<%- include('_bottom') %>

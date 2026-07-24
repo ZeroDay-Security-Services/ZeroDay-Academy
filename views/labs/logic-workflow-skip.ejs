@@ -1,0 +1,14 @@
+<%- include('_top', { appName: 'QuickCart', pageTitle: 'Order Workflow', theme: 'logic', tag: '/labs/logic-workflow-skip' }) %>
+<div class="lab-card">
+  <h1>Complete your order</h1>
+  <p>Step 1: Cart (done) → Step 2: Payment → Step 3: Confirm</p>
+  <form method="POST" action="/labs/logic-workflow-skip/pay">
+    <button type="submit">Step 2: Pay (this card always declines)</button>
+  </form>
+</div>
+<div class="lab-card">
+  <p class="lab-meta">Order status: payment completed = <strong><%= state.paymentCompleted %></strong>, order confirmed = <strong><%= state.orderConfirmed %></strong></p>
+  <% if (flag) { %><div class="lab-alert success">Order confirmed without ever paying! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+</div>
+
+<%- include('_bottom') %>

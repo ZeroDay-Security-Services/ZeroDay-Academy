@@ -1,0 +1,26 @@
+<%- include('_top', { appName: 'ClientPortal Shop', pageTitle: 'Catalog Search', theme: 'injection', tag: '/labs/sqli-union' }) %>
+<div class="lab-card">
+  <h1>Search by category</h1>
+  <p>Only <em>released</em> products in a given category are shown. Try: <code>Tools</code></p>
+  <form method="POST" action="/labs/sqli-union">
+    <label>Category</label>
+    <input name="category" value="<%= category %>" placeholder="Tools">
+    <button type="submit">Search</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+</div>
+<% if (results) { %>
+<div class="lab-card">
+  <table class="lab-table">
+    <thead><tr><th>Name</th><th>Category</th><th>Price</th></tr></thead>
+    <tbody>
+      <% results.forEach(r => { %>
+        <tr><td><%= r.name %></td><td><%= r.category %></td><td><%= r.price %></td></tr>
+      <% }) %>
+      <% if (results.length === 0) { %><tr><td colspan="3" class="lab-meta">No results.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%- include('_bottom') %>

@@ -1,0 +1,20 @@
+<%- include('_top', { appName: 'TeamHub API', pageTitle: 'Account Settings', theme: 'api', tag: '/labs/api-mass-assignment' }) %>
+<div class="lab-card">
+  <h1>Account settings</h1>
+  <p>Current: <span class="lab-badge"><%= JSON.stringify(account) %></span></p>
+  <form id="patchForm">
+    <label>PATCH body (JSON)</label>
+    <textarea id="body" rows="3">{"displayName":"New Name"}</textarea>
+    <button type="submit">Send PATCH /api/account</button>
+  </form>
+  <% if (flag) { %><div class="lab-alert success" style="margin-top:1rem;">Enterprise tier unlocked! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+</div>
+
+<script>
+document.getElementById('patchForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  await fetch('/labs/api-mass-assignment/api/account', { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: document.getElementById('body').value });
+  location.reload();
+});
+</script>
+<%- include('_bottom') %>

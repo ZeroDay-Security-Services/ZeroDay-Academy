@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClientPortal — Staff Login</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="injection">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">ClientPortal Inc.</span><span class="tag">/labs/sqli-login</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Staff Login</h1>
+    <p>Internal portal for ClientPortal staff. Unauthorized access is prohibited (allegedly).</p>
+
+    <% if (result && result.success === false) { %>
+      <div class="lab-alert error">Login failed: no matching account.</div>
+    <% } %>
+    <% if (result && result.success) { %>
+      <div class="lab-alert success">
+        Welcome, <strong><%= result.account.username %></strong> (role: <%= result.account.role %>).
+        <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+      </div>
+    <% } %>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+
+    <form method="POST" action="/labs/sqli-login">
+      <label>Username</label>
+      <input name="username" autocomplete="off">
+      <label>Password</label>
+      <input name="password" type="text" autocomplete="off">
+      <button type="submit">Sign in</button>
+    </form>
+
+    <% if (query) { %>
+      <p class="lab-meta" style="margin-top:1rem;">Debug: query executed by the server</p>
+      <div class="lab-code"><%= query %></div>
+    <% } %>
+  </div>
+
+</body>
+</html>

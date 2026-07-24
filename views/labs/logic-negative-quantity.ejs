@@ -1,0 +1,13 @@
+<%- include('_top', { appName: 'QuickCart', pageTitle: 'Checkout', theme: 'logic', tag: '/labs/logic-negative-quantity' }) %>
+<div class="lab-card">
+  <h1>Titanium Lockpick Set -- $89.00 each</h1>
+  <div class="lab-alert info">Account balance: $<%= balance %></div>
+  <% if (flag) { %><div class="lab-alert success">Balance exploited! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+  <form method="POST" action="/labs/logic-negative-quantity/checkout">
+    <label>Quantity</label>
+    <input name="quantity" type="number" value="1">
+    <button type="submit">Checkout</button>
+  </form>
+</div>
+
+<%- include('_bottom') %>

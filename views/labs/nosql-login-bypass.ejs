@@ -1,0 +1,29 @@
+<%- include('_top', { appName: 'ClientPortal API', pageTitle: 'Login', theme: 'nosql', tag: '/labs/nosql-login-bypass' }) %>
+<div class="lab-card">
+  <h1>Login (raw JSON request)</h1>
+  <p>This form sends real JSON to a real MongoDB-backed login endpoint. Edit the JSON directly before sending.</p>
+  <form id="loginForm">
+    <label>Request body (JSON)</label>
+    <textarea id="body" rows="4">{"username":"admin","password":"wrongpass"}</textarea>
+    <button type="submit">Send login request</button>
+  </form>
+  <% if (bodyUsed) { %><p class="lab-meta">Sent: <code><%= bodyUsed %></code></p><% } %>
+  <% if (result && result.notFound) { %><div class="lab-alert error">No matching account.</div><% } %>
+  <% if (result && result.username) { %>
+    <div class="lab-alert success">
+      Logged in as <strong><%= result.username %></strong> (role: <%= result.role %>)
+      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+    </div>
+  <% } %>
+  <div id="out"></div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const body = document.getElementById('body').value;
+  const res = await fetch('/labs/nosql-login-bypass/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body });
+  document.open(); document.write(await res.text()); document.close();
+});
+</script>
+<%- include('_bottom') %>

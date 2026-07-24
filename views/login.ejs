@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container-narrow" style="padding-top:4rem; padding-bottom:5rem;">
+  <div class="glass panel">
+    <h2>Sign in</h2>
+    <p class="muted-note" style="margin-bottom:1.5rem;">Welcome back, hacker.</p>
+    <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+    <form method="POST" action="/login">
+      <input type="hidden" name="next" value="<%= next %>">
+      <div class="field">
+        <label for="username">Username or email</label>
+        <input id="username" name="username" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+    <p style="margin-top:1.2rem; font-size:0.88rem;">New here? <a href="/register">Create an account</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

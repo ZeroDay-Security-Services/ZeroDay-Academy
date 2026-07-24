@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CommentBoard — Community</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="xss">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">CommentBoard</span><span class="tag">/labs/stored-xss<% if (typeof botView !== 'undefined' && botView) { %> · moderator view<% } %></span></div>
+<div class="lab-wrap">
+  <% if (typeof botView !== 'undefined' && botView) { %>
+    <div class="lab-alert info">You are viewing this page as the <strong>moderator bot</strong>, which holds a privileged session cookie (<code>mod_session</code>).</div>
+  <% } %>
+  <% if (posted) { %><div class="lab-alert success">Comment posted.</div><% } %>
+
+  <div class="lab-card">
+    <h1>Leave a comment</h1>
+    <form method="POST" action="/labs/stored-xss">
+      <label>Name</label>
+      <input name="author" placeholder="Your name">
+      <label>Comment</label>
+      <textarea name="body" placeholder="Say something..."></textarea>
+      <button type="submit">Post comment</button>
+    </form>
+  </div>
+
+  <div class="lab-card">
+    <h2>Comments</h2>
+    <ul class="lab-list">
+      <% comments.forEach(c => { %>
+        <li>
+          <strong><%= c.author %></strong>
+          <div class="lab-meta"><%= c.created_at %></div>
+          <!-- VULNERABLE: comment body rendered without escaping -->
+          <div><%- c.body %></div>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+
+  <div class="lab-card">
+    <p class="lab-meta">Exfil endpoint for your payload to call: <code>POST /labs/stored-xss/exfil</code> with a <code>token</code> field. Then trigger the bot's visit at <a class="lab-link" href="/labs/stored-xss/bot-visit">/labs/stored-xss/bot-visit</a> and check <a class="lab-link" href="/labs/stored-xss/check">/labs/stored-xss/check</a> for the flag once its cookie has been captured.</p>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+<%- include('_top', { appName: 'QuickNotes', pageTitle: 'Welcome banner', theme: 'xss', tag: '/labs/dom-xss-hash' }) %>
+<div class="lab-card">
+  <h1>Welcome banner</h1>
+  <p>This page greets you using the name in the URL fragment, e.g. <code>#Alex</code>.</p>
+  <div id="banner" class="lab-alert info">Hello!</div>
+</div>
+
+<script>
+  // --- VULNERABLE: location.hash written into innerHTML with no
+  // sanitization, entirely on the client. ---
+  function renderBanner() {
+    const name = decodeURIComponent(location.hash.slice(1) || 'friend');
+    document.getElementById('banner').innerHTML = 'Hello, ' + name + '!';
+  }
+  window.addEventListener('hashchange', renderBanner);
+  renderBanner();
+</script>
+<%- include('_bottom') %>

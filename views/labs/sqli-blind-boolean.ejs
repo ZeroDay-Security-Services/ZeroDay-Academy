@@ -1,0 +1,28 @@
+<%- include('_top', { appName: 'ClientPortal Shop', pageTitle: 'Order Lookup', theme: 'injection', tag: '/labs/sqli-blind-boolean' }) %>
+<div class="lab-card">
+  <h1>Order status lookup</h1>
+  <p>Enter an order ID to check if it belongs to the current guest account.</p>
+  <form method="POST" action="/labs/sqli-blind-boolean/lookup">
+    <label>Order ID</label>
+    <input name="id" value="<%= id %>" placeholder="1">
+    <button type="submit">Check</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (found === true) { %><div class="lab-alert success">✅ Order found for guest.</div><% } %>
+  <% if (found === false) { %><div class="lab-alert error">❌ No matching order.</div><% } %>
+</div>
+<div class="lab-card">
+  <h2>Submit reconstructed secret</h2>
+  <p class="lab-meta">A secret string lives in the <code>sqli_secrets</code> table under label <code>blind-flag</code>. Use the boolean oracle above (e.g. <code>1 AND SUBSTR((SELECT value FROM sqli_secrets WHERE label='blind-flag'),1,1)='Z'</code>) to extract it one character at a time, then submit your full answer below.</p>
+  <form method="POST" action="/labs/sqli-blind-boolean/check">
+    <label>Reconstructed secret</label>
+    <input name="answer" placeholder="ZDS{...}">
+    <button type="submit">Verify</button>
+  </form>
+  <% if (checkResult) { %>
+    <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
+      <% if (checkResult.correct) { %>Correct! Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } else { %>Not quite -- keep extracting.<% } %>
+    </div>
+  <% } %>
+</div>
+<%- include('_bottom') %>

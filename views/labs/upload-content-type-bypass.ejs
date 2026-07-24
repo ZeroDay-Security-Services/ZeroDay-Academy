@@ -1,0 +1,35 @@
+<%- include('_top', { appName: 'PixelHost', pageTitle: 'Avatar Upload', theme: 'upload', tag: '/labs/upload-content-type-bypass' }) %>
+<div class="lab-card">
+  <h1>Upload an avatar (PNG/JPEG only)</h1>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <form id="uploadForm">
+    <label>Filename</label>
+    <input id="filename" value="avatar.png">
+    <label>Declared Content-Type (sent as a header)</label>
+    <input id="declaredType" value="image/png">
+    <label>File content</label>
+    <textarea id="content" rows="4">binary-image-data-placeholder</textarea>
+    <button type="submit">Upload</button>
+  </form>
+</div>
+<div class="lab-card">
+  <h2>Gallery</h2>
+  <ul class="lab-list">
+    <% files.forEach(f => { %><li><%= f.filename %> — <a class="lab-link" href="/labs/upload-content-type-bypass/view/<%= f._id %>" target="_blank">view ↗</a></li><% }) %>
+    <% if (files.length === 0) { %><li class="lab-meta">No uploads yet.</li><% } %>
+  </ul>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const filename = document.getElementById('filename').value;
+  const declaredType = document.getElementById('declaredType').value;
+  const content = document.getElementById('content').value;
+  await fetch('/labs/upload-content-type-bypass/upload?filename=' + encodeURIComponent(filename), {
+    method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Declared-Type': declaredType }, body: content
+  });
+  location.reload();
+});
+</script>
+<%- include('_bottom') %>

@@ -1,0 +1,18 @@
+<%- include('_top', { appName: 'QuickBank', pageTitle: 'Account', theme: 'csrf', tag: '/labs/csrf-get-based' }) %>
+<div class="lab-card">
+  <h1>Your balance</h1>
+  <div class="lab-alert info">$<%= balance %></div>
+  <% if (flag) { %><div class="lab-alert success">Funds moved to "attacker" via a forged GET request. Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
+</div>
+<div class="lab-card">
+  <h2>Legitimate transfer form (still just a GET under the hood)</h2>
+  <form method="GET" action="/labs/csrf-get-based/transfer">
+    <label>To</label>
+    <input name="to" placeholder="friend">
+    <label>Amount</label>
+    <input name="amount" type="number" placeholder="50">
+    <button type="submit">Transfer</button>
+  </form>
+</div>
+
+<%- include('_bottom') %>

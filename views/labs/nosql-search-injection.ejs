@@ -1,0 +1,16 @@
+<%- include('_top', { appName: 'ClientPortal Shop', pageTitle: 'Catalog', theme: 'nosql', tag: '/labs/nosql-search-injection' }) %>
+<div class="lab-card">
+  <h1>Catalog (released items only)</h1>
+  <p class="lab-meta">Query used: <code><%= rawQuery %></code></p>
+  <ul class="lab-list">
+    <% results.forEach(r => { %><li><%= r.data.name %> <span class="lab-badge"><%= r.data.released ? 'released' : 'unreleased' %></span></li><% }) %>
+    <% if (results.length === 0) { %><li class="lab-meta">No results.</li><% } %>
+  </ul>
+</div>
+<div class="lab-card">
+  <h2>Try a different query</h2>
+  <p class="lab-meta">The normal link is <code>?</code> (no params, defaults to released=true). Try appending query-string operators, e.g.:</p>
+  <div class="lab-code">?released[$ne]=true</div>
+  <a class="lab-link" href="/labs/nosql-search-injection?released[$ne]=true">Try it</a>
+</div>
+<%- include('_bottom') %>

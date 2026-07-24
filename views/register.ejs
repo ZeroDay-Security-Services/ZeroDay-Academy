@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container-narrow" style="padding-top:4rem; padding-bottom:5rem;">
+  <div class="glass panel">
+    <h2>Create your account</h2>
+    <p class="muted-note" style="margin-bottom:1.5rem;">Start capturing flags across 50+ vulnerability labs.</p>
+    <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+    <form method="POST" action="/register">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" required minlength="3" maxlength="30" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required minlength="8" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+    <p style="margin-top:1.2rem; font-size:0.88rem;">Already have an account? <a href="/login">Sign in</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

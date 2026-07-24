@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreetingCards — Create a Card</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="ssti">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">ZeroDay GreetingCards</span><span class="tag">/labs/ssti-render</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Create a greeting card</h1>
+    <p>Write a message and we'll render it into a card template server-side.</p>
+    <form method="POST" action="/labs/ssti-render">
+      <label>Your message</label>
+      <textarea name="message" rows="3"><%= message %></textarea>
+      <button type="submit">Render card</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <% if (output) { %>
+      <p class="lab-meta" style="margin-top:1rem;">Rendered card</p>
+      <div class="lab-code"><%= output %></div>
+    <% } %>
+  </div>
+  
+
+</body>
+</html>

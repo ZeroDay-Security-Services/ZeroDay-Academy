@@ -1,0 +1,15 @@
+<%- include('_top', { appName: 'GuestBook', pageTitle: 'Sign the guestbook', theme: 'xss', tag: '/labs/xss-filter-bypass' }) %>
+<div class="lab-card">
+  <h1>Sign the guestbook</h1>
+  <p>Your name is filtered to strip <code>&lt;script&gt;</code> tags before being shown.</p>
+  <form method="GET" action="/labs/xss-filter-bypass">
+    <label>Your name</label>
+    <input name="name" value="<%= name %>" placeholder="e.g. <img src=x onerror=alert(1)>">
+    <button type="submit">Sign</button>
+  </form>
+  <% if (name) { %>
+    <p>Guestbook says: <!-- VULNERABLE: filtered output still rendered unescaped --> <%- filtered %></p>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>

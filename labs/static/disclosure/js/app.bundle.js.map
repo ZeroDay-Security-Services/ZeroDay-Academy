@@ -1,0 +1,1 @@
+{"version":3,"file":"app.bundle.js","sources":["app.js"],"sourcesContent":["// app.js -- original source\nfunction increment(x){return x+1;}\n// TODO: remove before deploy -- debug endpoint, no auth required\n// GET /labs/disclosure-source-map/debug?key=ZDS{s0urc3_m4ps_l34k_0r1g1n4l_s0urc3}\nconsole.log(\"app loaded\");"],"names":[],"mappings":""}

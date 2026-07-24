@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
+  <div class="hero-eyebrow">Standings</div>
+  <h2>Leaderboard</h2>
+  <p class="muted-note">Ranked by total points, tiebroken by earliest registration.</p>
+
+  <div class="glass" style="padding:0; margin-top:1.5rem;">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>#</th><th>Hacker</th><th>Solves</th><th>Points</th></tr></thead>
+      <tbody>
+        <% leaders.forEach((u, i) => { %>
+          <tr>
+            <td class="rank-cell <%= i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'' %>">#<%= i+1 %></td>
+            <td><%= u.username %><% if (currentUser && currentUser.username === u.username) { %> <span class="muted-note">(you)</span><% } %></td>
+            <td class="muted-note"><%= u.solveCount %></td>
+            <td class="mono" style="color:var(--amber); font-weight:700;"><%= u.points %></td>
+          </tr>
+        <% }) %>
+        <% if (leaders.length === 0) { %>
+          <tr><td colspan="4" class="empty-state">No hackers on the board yet — be the first.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

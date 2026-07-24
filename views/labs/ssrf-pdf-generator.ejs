@@ -1,0 +1,17 @@
+<%- include('_top', { appName: 'InvoicePrint', pageTitle: 'Generate PDF', theme: 'ssrf', tag: '/labs/ssrf-pdf-generator' }) %>
+<div class="lab-card">
+  <h1>Generate an invoice PDF</h1>
+  <p>Paste HTML for your invoice. Any <code>&lt;img&gt;</code> is fetched server-side while rendering.</p>
+  <form method="POST" action="/labs/ssrf-pdf-generator">
+    <label>Invoice HTML</label>
+    <textarea name="html" rows="6"><%= html %></textarea>
+    <button type="submit">Render</button>
+  </form>
+  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  <% if (fetched) { %>
+    <p class="lab-meta" style="margin-top:1rem;">Server fetched: <%= fetched.url %> (via <%= fetched.via %>)</p>
+    <div class="lab-code"><%= fetched.body %></div>
+  <% } %>
+</div>
+
+<%- include('_bottom') %>
