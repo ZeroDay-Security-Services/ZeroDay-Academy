@@ -13,7 +13,7 @@
 </div>
 <div class="lab-card">
   <h2>Submit reconstructed secret</h2>
-  <p class="lab-meta">A secret string lives in the <code>sqli_secrets</code> table under label <code>blind-flag</code>. Use the boolean oracle above (e.g. <code>1 AND SUBSTR((SELECT value FROM sqli_secrets WHERE label='blind-flag'),1,1)='Z'</code>) to extract it one character at a time, then submit your full answer below.</p>
+  <p class="lab-meta">A secret string lives in the <code>sqli_secrets</code> table under label <code>blind-flag</code>. Use the boolean oracle above to extract it one character at a time by conditionally changing the query outcome, then submit your full answer below.</p>
   <form method="POST" action="/labs/sqli-blind-boolean/check">
     <label>Reconstructed secret</label>
     <input name="answer" placeholder="ZDS{...}">

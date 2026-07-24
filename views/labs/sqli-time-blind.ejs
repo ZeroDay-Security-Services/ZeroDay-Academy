@@ -12,8 +12,7 @@
 </div>
 <div class="lab-card">
   <h2>Force a delay</h2>
-  <p class="lab-meta">SQLite has no <code>SLEEP()</code>, but a recursive CTE that counts to a few million rows takes real, measurable time. Try injecting a condition that only runs it when a guessed character is correct, e.g.:</p>
-  <div class="lab-code">' OR (SELECT CASE WHEN SUBSTR((SELECT value FROM sqli_secrets WHERE label='time-flag'),1,1)='Z' THEN (WITH RECURSIVE r(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM r WHERE x&lt;3000000) SELECT COUNT(*) FROM r) ELSE 0 END) IS NOT NULL --</div>
+  <p class="lab-meta">SQLite has no <code>SLEEP()</code>, but a recursive CTE that counts to a few million rows takes real, measurable time. Try injecting a condition that only runs a heavy query when a guessed character from the <code>sqli_secrets</code> table (label <code>time-flag</code>) is correct.</p>
   <p class="lab-meta">A big jump in response time confirms the guess. Repeat per character, then submit your reconstructed secret:</p>
   <form method="POST" action="/labs/sqli-time-blind/check">
     <label>Reconstructed secret</label>

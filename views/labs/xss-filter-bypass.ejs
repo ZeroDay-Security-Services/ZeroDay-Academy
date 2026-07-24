@@ -4,7 +4,7 @@
   <p>Your name is filtered to strip <code>&lt;script&gt;</code> tags before being shown.</p>
   <form method="GET" action="/labs/xss-filter-bypass">
     <label>Your name</label>
-    <input name="name" value="<%= name %>" placeholder="e.g. <img src=x onerror=alert(1)>">
+    <input name="name" value="<%= name %>" placeholder="Enter your name">
     <button type="submit">Sign</button>
   </form>
   <% if (name) { %>
