@@ -7,3 +7,5 @@ db/academy.db-shm
 
 *.db-wal
 *.db-shm
+
+*.db
