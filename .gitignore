@@ -4,3 +4,6 @@ db/academy.db-wal
 db/academy.db-shm
 *.log
 .env
+
+*.db-wal
+*.db-shm
