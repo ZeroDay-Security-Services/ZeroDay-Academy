@@ -1,8 +1,3 @@
-// labs/csrf-get-based.js
-// VULNERABILITY: CSRF via a state-changing GET request (CWE-352). Because
-// the balance-transfer action is wired to a GET route, a bare <img> tag or
-// link on any external page is enough to trigger it for a logged-in victim
-// -- no form, no JS, no click even required.
 const express = require("express");
 const router = express.Router();
 
@@ -18,7 +13,6 @@ router.get("/", (req, res) => {
   res.render("labs/csrf-get-based", { balance: state.balance, flag: state.transferredToAttacker ? "ZDS{g3t_r3qu3sts_sh0uld_n3v3r_ch4ng3_st4t3}" : null });
 });
 
-// --- VULNERABLE: state-changing action reachable via a plain GET, no token ---
 router.get("/transfer", (req, res) => {
   const state = getState(req);
   const to = req.query.to || "";
@@ -29,7 +23,6 @@ router.get("/transfer", (req, res) => {
   }
   res.redirect("/labs/csrf-get-based");
 });
-
 
 router.post("/reset", (req, res) => {
   req.session.csrfGetLab = null;

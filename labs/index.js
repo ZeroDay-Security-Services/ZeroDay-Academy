@@ -1,4 +1,3 @@
-// labs/index.js -- registers every lab router under its mount path
 module.exports = [
   { mountPath: "/labs/account-enum-timing", router: require("./account-enum-timing") },
   { mountPath: "/labs/api-bola", router: require("./api-bola") },

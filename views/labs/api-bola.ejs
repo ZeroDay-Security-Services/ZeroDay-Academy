@@ -1,7 +1,34 @@
-<%- include('_top', { appName: 'BillPeak API', pageTitle: 'My Orders', theme: 'api', tag: '/labs/api-bola · authenticated as guest' }) %>
-<div class="lab-card">
-  <h1>My orders (via API)</h1>
-  <p>Your order: <a class="lab-link" href="/labs/api-bola/api/orders/ord_1001" target="_blank">/labs/api-bola/api/orders/ord_1001 ↗</a></p>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrderAPI — Your Orders</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="api">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">OrderAPI</span><span class="tag">/labs/api-bola</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Your Orders</h1>
+    <ul class="lab-list">
+      <% myOrders.forEach(o => { %>
+        <li><a href="/labs/api-bola/api/order/<%= o.data.id %>"><%= o.data.id %></a> — $<%= o.data.amount %></li>
+      <% }) %>
+    </ul>
+  </div>
 
-<%- include('_bottom') %>
+  <% if (selectedOrder) { %>
+  <div class="lab-card">
+    <h2>Order Detail</h2>
+    <table class="lab-table">
+      <% Object.entries(selectedOrder).forEach(([k,v]) => { %>
+        <tr><td><%= k %></td><td><%= v %></td></tr>
+      <% }) %>
+    </table>
+  </div>
+  <% } %>
+
+  <% if (error) { %><div class="lab-card"><div class="lab-alert error"><%= error %></div></div><% } %>
+
+</body>
+</html>

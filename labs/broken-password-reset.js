@@ -1,8 +1,3 @@
-// labs/broken-password-reset.js
-// VULNERABILITY: Predictable password reset tokens (CWE-330/CWE-640). Reset
-// tokens are generated from a simple sequential counter instead of a
-// cryptographically random value, so anyone can predict another user's
-// token by requesting their own reset first and incrementing.
 const express = require("express");
 const LabToken = require("../models/LabToken");
 const router = express.Router();
@@ -20,12 +15,9 @@ router.post("/request-reset", async (req, res) => {
   const state = getState(req);
   const username = (req.body.username || "").trim();
   state.counter += 1;
-  // --- VULNERABLE: sequential, guessable token instead of crypto-random ---
   const token = "RST-" + state.counter;
   await LabToken.create({ labSlug: "broken-password-reset", purpose: "password-reset", ownerUsername: username, token, used: false });
 
-  // Simulates the token being emailed only to the account owner -- we only
-  // show it back to the player when it's their own ("guest") account.
   const issuedToken = username === "guest" ? token : null;
   res.render("labs/broken-password-reset", { issuedToken, result: null, error: null });
 });
@@ -45,7 +37,6 @@ router.post("/complete-reset", async (req, res) => {
   }
   res.render("labs/broken-password-reset", { issuedToken: null, result, error });
 });
-
 
 router.post("/reset", (req, res) => {
   req.session.resetLab = null;

@@ -1,15 +1,26 @@
-<%- include('_top', { appName: 'GuestBook', pageTitle: 'Sign the guestbook', theme: 'xss', tag: '/labs/xss-filter-bypass' }) %>
-<div class="lab-card">
-  <h1>Sign the guestbook</h1>
-  <p>Your name is filtered to strip <code>&lt;script&gt;</code> tags before being shown.</p>
-  <form method="GET" action="/labs/xss-filter-bypass">
-    <label>Your name</label>
-    <input name="name" value="<%= name %>" placeholder="Enter your name">
-    <button type="submit">Sign</button>
-  </form>
-  <% if (name) { %>
-    <p>Guestbook says: <!-- VULNERABLE: filtered output still rendered unescaped --> <%- filtered %></p>
-  <% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamBoard — User Greeting</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="xss">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">TeamBoard</span><span class="tag">/labs/xss-filter-bypass</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Team Board</h1>
+    <form method="GET" action="/labs/xss-filter-bypass">
+      <label>Your display name</label>
+      <input name="name" placeholder="Enter your name" value="<%= name %>">
+      <button type="submit">Set name</button>
+    </form>
+    <% if (filtered) { %>
+      <div style="margin-top:1rem;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);">
+        Welcome, <%- filtered %>!
+      </div>
+    <% } %>
+  </div>
 
-<%- include('_bottom') %>
+</body>
+</html>

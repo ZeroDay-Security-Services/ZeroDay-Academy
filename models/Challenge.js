@@ -1,11 +1,11 @@
-// models/Challenge.js
+
 const { mongoose } = require("../db/mongo");
 
 const challengeSchema = new mongoose.Schema({
   slug: { type: String, required: true, unique: true },
   title: { type: String, required: true },
   category: { type: String, required: true },
-  domain: { type: String, required: true }, // broad grouping e.g. "Injection", "Client-Side", "API Security"
+  domain: { type: String, required: true }, 
   owaspRef: { type: String, required: true },
   difficulty: { type: String, required: true, enum: ["Easy", "Medium", "Hard", "Insane", "Impossible"] },
   points: { type: Number, required: true },
@@ -14,7 +14,7 @@ const challengeSchema = new mongoose.Schema({
   flagHash: { type: String, required: true },
   labPath: { type: String, required: true },
   hint: { type: String, default: "" },
-  color: { type: String, default: "blue" }, // theme accent for the lab UI
+  color: { type: String, default: "blue" }, 
   orderIndex: { type: Number, default: 0 }
 });
 

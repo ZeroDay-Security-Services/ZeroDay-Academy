@@ -1,17 +1,4 @@
-// labs/xxe-profile-import.js
-// VULNERABILITY: XML External Entity injection (CWE-611). The profile
-// importer parses uploaded XML and resolves <!ENTITY ... SYSTEM "..."> to
-// local file contents before substituting them into the document -- the
-// same behavior a real vulnerable XML parser exhibits when DTD processing
-// and external entities are left enabled.
-//
-// Implementation note: rather than pulling in a native libxml2 binding, this
-// lab hand-rolls the minimal, intentionally-unsafe subset of entity
-// resolution needed to teach the vulnerability -- it recognizes
-// <!ENTITY name SYSTEM "file:///path"> declarations and substitutes &name;
-// references with the referenced file's contents, with no restriction on
-// path or scheme. That IS the vulnerability; it is not a general-purpose
-// parser and should never be reused outside this lab.
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -20,7 +7,7 @@ const router = express.Router();
 
 const labDir = path.join(__dirname, "..", "db", "xxe-fs");
 if (!fs.existsSync(labDir)) fs.mkdirSync(labDir, { recursive: true });
-const secretPath = path.join(labDir, "secret.txt");
+const secretPath = path.join(labDir, "config.yml");
 if (!fs.existsSync(secretPath)) fs.writeFileSync(secretPath, "ZDS{xxe_ext3rnal_ent1t13s_r3ad_l0cal_f1l3s}\n");
 
 function resolveSystemPath(uri) {
@@ -30,7 +17,6 @@ function resolveSystemPath(uri) {
   return path.join(labDir, uri);
 }
 
-// --- VULNERABLE: parses <!ENTITY x SYSTEM "..."> and inlines file contents ---
 function vulnerableParse(xml) {
   const entityDefs = {};
   const entityRegex = /<!ENTITY\s+(\w+)\s+SYSTEM\s+"([^"]+)"\s*>/g;
@@ -41,7 +27,7 @@ function vulnerableParse(xml) {
       const filePath = resolveSystemPath(uri);
       entityDefs[name] = fs.readFileSync(filePath, "utf8");
     } catch (e) {
-      entityDefs[name] = "[error resolving entity '" + name + "': " + e.message + "]";
+      entityDefs[name] = "[error: " + e.message + "]";
     }
   }
 
@@ -57,33 +43,31 @@ function extractTag(xml, tag) {
   return m ? m[1] : null;
 }
 
-function defaultSample() {
-  return "<?xml version=\"1.0\"?>\n<profile>\n  <displayName>Alex</displayName>\n</profile>";
-}
-
 router.get("/", (req, res) => {
-  res.render("labs/xxe-profile-import", { result: null, xmlInput: defaultSample(), error: null });
+  res.render("labs/xxe-profile-import", { profileData: null, error: null });
 });
 
 router.post("/", (req, res) => {
   const xml = req.body.xml || "";
   let error = null;
-  let displayName = null, resolvedXml = null;
+  let profileData = null;
 
   try {
-    resolvedXml = vulnerableParse(xml);
-    displayName = extractTag(resolvedXml, "displayName");
+    const resolvedXml = vulnerableParse(xml);
+    const displayName = extractTag(resolvedXml, "displayName");
+    const email = extractTag(resolvedXml, "email");
+    const bio = extractTag(resolvedXml, "bio");
+    profileData = {};
+    if (displayName) profileData.displayName = displayName;
+    if (email) profileData.email = email;
+    if (bio) profileData.bio = bio;
+    if (Object.keys(profileData).length === 0) profileData = null;
   } catch (e) {
-    error = e.message;
+    error = "Could not process your XML.";
   }
 
-  res.render("labs/xxe-profile-import", {
-    result: { displayName, resolvedXml },
-    xmlInput: xml,
-    error
-  });
+  res.render("labs/xxe-profile-import", { profileData, error });
 });
-
 
 router.post("/reset", (req, res) => {
   

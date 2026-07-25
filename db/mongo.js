@@ -1,6 +1,4 @@
-// db/mongo.js -- MongoDB Atlas connection via Mongoose.
-// Works identically with a local MongoDB, Atlas, or any Mongo-compatible
-// instance -- point MONGODB_URI at whichever one you're using.
+
 const mongoose = require("mongoose");
 
 async function connectMongo() {

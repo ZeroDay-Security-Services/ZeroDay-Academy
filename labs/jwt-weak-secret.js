@@ -1,18 +1,20 @@
-// labs/jwt-weak-secret.js
-// VULNERABILITY: JWT signed with a weak, guessable secret (CWE-326/CWE-521).
-// The signature IS genuinely verified (unlike the alg:none lab) -- but the
-// HMAC secret is a common, brute-forceable word. Anyone who cracks it can
-// forge arbitrary valid tokens.
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 
-// Deliberately weak -- appears in common wordlists (rockyou/jwt-secrets lists).
 const WEAK_SECRET = "letmein123";
 
 router.get("/", (req, res) => {
-  const userToken = jwt.sign({ username: "guest", role: "user" }, WEAK_SECRET, { algorithm: "HS256", expiresIn: "1h" });
-  res.render("labs/jwt-weak-secret", { issuedToken: userToken, verifyResult: null, error: null, flag: null, submittedToken: userToken });
+  res.render("labs/jwt-weak-secret", { issuedToken: null, verifyResult: null, error: null, flag: null });
+});
+
+router.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === "guest" && password === "guest123") {
+    const userToken = jwt.sign({ username: "guest", role: "user" }, WEAK_SECRET, { algorithm: "HS256", expiresIn: "1h" });
+    return res.render("labs/jwt-weak-secret", { issuedToken: userToken, verifyResult: null, error: null, flag: null });
+  }
+  res.render("labs/jwt-weak-secret", { issuedToken: null, verifyResult: null, error: "Invalid credentials.", flag: null });
 });
 
 router.post("/verify", (req, res) => {
@@ -22,15 +24,13 @@ router.post("/verify", (req, res) => {
     verifyResult = jwt.verify(token, WEAK_SECRET, { algorithms: ["HS256"] });
     if (verifyResult.role === "admin") flag = "ZDS{w34k_jwt_s3cr3ts_ar3_brut3f0rc34bl3}";
   } catch (e) {
-    error = e.message;
+    error = "Unauthorized.";
   }
-  const userToken = jwt.sign({ username: "guest", role: "user" }, WEAK_SECRET, { algorithm: "HS256", expiresIn: "1h" });
-  res.render("labs/jwt-weak-secret", { issuedToken: userToken, verifyResult, error, flag, submittedToken: token });
+  res.render("labs/jwt-weak-secret", { issuedToken: null, verifyResult: verifyResult ? { role: verifyResult.role } : null, error, flag });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/jwt-weak-secret");
 });
 

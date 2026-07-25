@@ -1,4 +1,4 @@
-// server.js -- ZeroDay Academy platform entrypoint (by ZeroDay Security Services)
+
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
@@ -42,9 +42,6 @@ async function start() {
 
   app.use("/", platformRoutes);
 
-  // ---- Vulnerability labs: each mounted in isolation under /labs/<slug> ----
-  // Every lab is intentionally vulnerable. This is a controlled training
-  // environment -- do not deploy this app or reuse its patterns in production.
   const labRegistry = require("./labs");
   labRegistry.forEach(({ mountPath, router }) => {
     app.use(mountPath, router);

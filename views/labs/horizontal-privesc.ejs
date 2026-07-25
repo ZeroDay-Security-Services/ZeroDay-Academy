@@ -1,17 +1,33 @@
-<%- include('_top', { appName: 'NoteVault', pageTitle: 'My Notes', theme: 'access', tag: '/labs/horizontal-privesc · logged in as alice' }) %>
-<div class="lab-card">
-  <h1>My private note</h1>
-  <div class="lab-alert info"><%= myNote %></div>
-</div>
-<div class="lab-card">
-  <h2>Look up a note by username</h2>
-  <form method="GET" action="" onsubmit="window.location='/labs/horizontal-privesc/note/'+this.u.value; return false;">
-    <label>Username</label>
-    <input name="u" placeholder="alice">
-    <button type="submit">View</button>
-  </form>
-  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-  <% if (note) { %><div class="lab-alert success"><strong><%= username %>'s note:</strong> <%= note.note %></div><% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamNotes — My Notes</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="privesc">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">TeamNotes</span><span class="tag">/labs/horizontal-privesc</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>My Notes</h1>
+    <p>Logged in as <strong>alice</strong>.</p>
+    <div style="padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);margin-top:0.5rem;"><%= myNote %></div>
+  </div>
 
-<%- include('_bottom') %>
+  <div class="lab-card">
+    <h2>View User Notes</h2>
+    <form method="GET" action="/labs/horizontal-privesc/note/">
+      <label>Username</label>
+      <input id="userlookup" name="u" placeholder="Enter username" value="<%= username %>" autocomplete="off">
+      <button type="submit" onclick="this.form.action='/labs/horizontal-privesc/note/'+document.getElementById('userlookup').value; return true;">Look up</button>
+    </form>
+    <% if (note) { %>
+      <div class="lab-alert info" style="margin-top:1rem;">
+        <strong><%= note.username %></strong>: <%= note.note %>
+      </div>
+    <% } %>
+    <% if (error) { %><div class="lab-alert error" style="margin-top:1rem;"><%= error %></div><% } %>
+  </div>
+
+</body>
+</html>

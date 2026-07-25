@@ -1,9 +1,3 @@
-// labs/nosql-search-injection.js
-// VULNERABILITY: NoSQL operator injection via query-string parsing
-// (CWE-943). Express parses bracket-notation query strings into nested
-// objects (e.g. ?released[$ne]=true becomes {released:{$ne:true}}), and
-// this endpoint spreads req.query straight into a real MongoDB filter --
-// so a "hide unreleased items" check can be flipped entirely.
 const express = require("express");
 const LabRecord = require("../models/LabRecord");
 const router = express.Router();
@@ -21,10 +15,8 @@ async function ensureSeed() {
 
 router.get("/", async (req, res) => {
   await ensureSeed();
-  // --- VULNERABLE: any operator the client sends for `released` (or any
-  // other field) is merged straight into the real query filter. ---
   const filter = { labSlug: "nosql-search-injection", released: true, ...req.query };
-  delete filter.labSlug; // keep labSlug from being overridden, but everything else passes through
+  delete filter.labSlug;
   const mongoFilter = { labSlug: "nosql-search-injection" };
   Object.keys(filter).forEach(k => { if (k !== "labSlug") mongoFilter["data." + k] = filter[k]; });
 
@@ -32,14 +24,12 @@ router.get("/", async (req, res) => {
   try {
     results = await LabRecord.find(mongoFilter).lean();
   } catch (e) {
-    // invalid operator shape -- fail closed to an empty result
   }
-  res.render("labs/nosql-search-injection", { results, rawQuery: JSON.stringify(req.query) });
+  res.render("labs/nosql-search-injection", { results });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/nosql-search-injection");
 });
 

@@ -1,17 +1,28 @@
-<%- include('_top', { appName: 'VaultDoor', pageTitle: 'PIN Access', theme: 'auth', tag: '/labs/no-rate-limit-bruteforce' }) %>
-<div class="lab-card">
-  <h1>Enter your 4-digit PIN</h1>
-  <form method="POST" action="/labs/no-rate-limit-bruteforce/try-pin">
-    <label>PIN</label>
-    <input name="pin" maxlength="4" placeholder="0000">
-    <button type="submit">Unlock</button>
-  </form>
-  <% if (result) { %>
-    <div class="lab-alert <%= result.correct ? 'success' : 'error' %>">
-      <%= result.correct ? 'Correct PIN!' : 'Incorrect PIN.' %>
-      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
-    </div>
-  <% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAuth — PIN Login</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="auth">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">SecureAuth</span><span class="tag">/labs/no-rate-limit-bruteforce</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>PIN Login</h1>
+    <p>Enter your 4-digit PIN to access your account.</p>
+    <form method="POST" action="/labs/no-rate-limit-bruteforce/try-pin">
+      <label>PIN</label>
+      <input name="pin" type="password" maxlength="4" placeholder="****" autocomplete="off">
+      <button type="submit">Unlock</button>
+    </form>
+    <% if (result) { %>
+      <div class="lab-alert <%= result.correct ? 'success' : 'error' %>" style="margin-top:1rem;">
+        <%= result.correct ? 'Unlocked!' : 'Incorrect PIN.' %>
+        <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+      </div>
+    <% } %>
+  </div>
 
-<%- include('_bottom') %>
+</body>
+</html>

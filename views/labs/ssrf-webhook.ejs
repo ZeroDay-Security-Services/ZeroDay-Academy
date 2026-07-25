@@ -1,17 +1,31 @@
-<%- include('_top', { appName: 'NotifyHub', pageTitle: 'Webhook Test', theme: 'ssrf', tag: '/labs/ssrf-webhook' }) %>
-<div class="lab-card">
-  <h1>Test your webhook URL</h1>
-  <p>We'll send a test ping to the URL you provide and show you the response.</p>
-  <form method="POST" action="/labs/ssrf-webhook">
-    <label>Webhook URL</label>
-    <input name="url" value="<%= url %>" placeholder="https://example.com/hook">
-    <button type="submit">Test</button>
-  </form>
-  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-  <% if (result) { %>
-    <p class="lab-meta" style="margin-top:1rem;">Response (status <%= result.status %>, via <%= result.via %>)</p>
-    <div class="lab-code"><%= result.body %></div>
-  <% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebhookTester — Verify</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="ssrf">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">WebhookTester</span><span class="tag">/labs/ssrf-webhook</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Test Webhook</h1>
+    <p>Verify that your webhook endpoint is reachable.</p>
+    <form method="POST" action="/labs/ssrf-webhook">
+      <label>Webhook URL</label>
+      <input name="url" placeholder="https://your-service.com/callback" value="<%= url %>" autocomplete="off">
+      <button type="submit">Test</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  </div>
 
-<%- include('_bottom') %>
+  <% if (result) { %>
+  <div class="lab-card">
+    <h2>Response</h2>
+    <p class="lab-meta">Status: <%= result.status %></p>
+    <pre style="white-space:pre-wrap;word-break:break-all;font-size:0.85rem;"><%= result.body %></pre>
+  </div>
+  <% } %>
+
+</body>
+</html>

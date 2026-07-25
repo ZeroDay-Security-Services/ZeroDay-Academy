@@ -1,10 +1,3 @@
-// labs/graphql-introspection.js
-// VULNERABILITY: GraphQL introspection left enabled in production, exposing
-// undocumented fields/queries an attacker can then call directly
-// (CWE-200 / OWASP API9:2019). This is a lightweight, purpose-built
-// endpoint that mimics real GraphQL introspection & query dispatch
-// semantics closely enough to teach the vulnerability -- it is not the
-// full GraphQL specification.
 const express = require("express");
 const router = express.Router();
 
@@ -36,9 +29,8 @@ router.post("/graphql", express.json(), (req, res) => {
   res.json({ errors: [{ message: "Cannot query field -- unknown query." }] });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/graphql-introspection");
 });
 

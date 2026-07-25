@@ -1,18 +1,35 @@
-<%- include('_top', { appName: 'QuickBank', pageTitle: 'Account', theme: 'csrf', tag: '/labs/csrf-get-based' }) %>
-<div class="lab-card">
-  <h1>Your balance</h1>
-  <div class="lab-alert info">$<%= balance %></div>
-  <% if (flag) { %><div class="lab-alert success">Funds moved to "attacker" via a forged GET request. Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
-</div>
-<div class="lab-card">
-  <h2>Legitimate transfer form (still just a GET under the hood)</h2>
-  <form method="GET" action="/labs/csrf-get-based/transfer">
-    <label>To</label>
-    <input name="to" placeholder="friend">
-    <label>Amount</label>
-    <input name="amount" type="number" placeholder="50">
-    <button type="submit">Transfer</button>
-  </form>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickPay — Wallet</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="csrf">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">QuickPay</span><span class="tag">/labs/csrf-get-based</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Your Wallet</h1>
+    <p>Balance: <strong>$<%= balance %></strong></p>
+    <% if (flag) { %>
+      <div class="lab-alert success">
+        Funds transferred to attacker account. Flag: <span class="lab-flag"><%= flag %></span>
+      </div>
+    <% } %>
+  </div>
 
-<%- include('_bottom') %>
+  <div class="lab-card">
+    <h2>Send Money</h2>
+    <form method="GET" action="/labs/csrf-get-based/transfer">
+      <label>Recipient</label>
+      <input name="to" placeholder="Username" autocomplete="off">
+      <label>Amount ($)</label>
+      <input name="amount" type="number" min="1" placeholder="50">
+      <button type="submit">Transfer</button>
+    </form>
+  </div>
+
+  <form method="POST" action="/labs/csrf-get-based/reset"><button type="submit" class="secondary">Reset lab</button></form>
+
+</body>
+</html>

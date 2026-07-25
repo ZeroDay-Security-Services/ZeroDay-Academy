@@ -1,28 +1,42 @@
-<%- include('_top', { appName: 'AccessCorp', pageTitle: 'Code Checker', theme: 'nosql', tag: '/labs/nosql-regex-extraction' }) %>
-<div class="lab-card">
-  <h1>Check an access code pattern</h1>
-  <p>We'll tell you if any stored code matches your pattern (used as a real MongoDB <code>$regex</code>).</p>
-  <form method="POST" action="/labs/nosql-regex-extraction/probe">
-    <label>Pattern</label>
-    <input name="pattern" placeholder="^ZDS">
-    <button type="submit">Probe</button>
-  </form>
-  <% if (matchResult) { %>
-    <div class="lab-alert <%= matchResult.matched ? 'success' : 'error' %>">Pattern <code><%= matchResult.pattern %></code>: <%= matchResult.matched ? 'MATCH' : 'no match' %></div>
-  <% } %>
-</div>
-<div class="lab-card">
-  <h2>Submit reconstructed code</h2>
-  <form method="POST" action="/labs/nosql-regex-extraction/check">
-    <label>Full code</label>
-    <input name="answer" placeholder="ZDS{...}">
-    <button type="submit">Verify</button>
-  </form>
-  <% if (checkResult) { %>
-    <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
-      <% if (checkResult.correct) { %>Correct! Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } else { %>Not quite.<% } %>
-    </div>
-  <% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeVault — Verify</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="nosql">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">CodeVault</span><span class="tag">/labs/nosql-regex-extraction</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Verify Access Code</h1>
+    <p>Check whether a given pattern matches a valid access code.</p>
+    <form method="POST" action="/labs/nosql-regex-extraction/probe">
+      <label>Pattern</label>
+      <input name="pattern" placeholder="Enter pattern to check" autocomplete="off">
+      <button type="submit">Probe</button>
+    </form>
+    <% if (matchResult) { %>
+      <div class="lab-alert <%= matchResult.matched ? 'success' : 'info' %>" style="margin-top:1rem;">
+        Pattern "<%= matchResult.pattern %>": <%= matchResult.matched ? 'Match found.' : 'No match.' %>
+      </div>
+    <% } %>
+  </div>
 
-<%- include('_bottom') %>
+  <div class="lab-card">
+    <h2>Submit full code</h2>
+    <form method="POST" action="/labs/nosql-regex-extraction/check">
+      <label>Access code</label>
+      <input name="answer" placeholder="Enter the full code" autocomplete="off">
+      <button type="submit">Verify</button>
+    </form>
+    <% if (checkResult) { %>
+      <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
+        <%= checkResult.correct ? 'Valid!' : 'Invalid code.' %>
+        <% if (checkResult.flag) { %><br>Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } %>
+      </div>
+    <% } %>
+  </div>
+
+</body>
+</html>

@@ -1,7 +1,23 @@
-<%- include('_top', { appName: 'AppBundle', pageTitle: 'Home', theme: 'disclosure', tag: '/labs/disclosure-source-map' }) %>
-<div class="lab-card">
-  <h1>Single-page app shell</h1>
-  <p>This page loads a minified bundle: <code>/labs/disclosure-source-map/js/app.bundle.js</code></p>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebApp — Dashboard</title>
+<link rel="stylesheet" href="/css/lab.css">
+<script src="/labs/disclosure-source-map/app.min.js"></script>
+</head>
+<body data-theme="disclosure">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">WebApp</span><span class="tag">/labs/disclosure-source-map</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Application Dashboard</h1>
+    <p>This application uses a production JavaScript bundle.</p>
+    <ul class="lab-list">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Support</a></li>
+    </ul>
+  </div>
 
-<%- include('_bottom') %>
+</body>
+</html>

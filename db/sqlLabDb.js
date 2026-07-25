@@ -1,8 +1,4 @@
-// db/sqlLabDb.js -- a small, dedicated SQL database used ONLY by the SQL
-// Injection category labs. The rest of the platform runs on MongoDB Atlas
-// as requested; but genuine SQL injection requires a real SQL engine
-// underneath it (that's the entire vulnerability class), so these five
-// labs run against a real embedded SQL database instead of faking it.
+
 const path = require("path");
 const Database = require("better-sqlite3");
 

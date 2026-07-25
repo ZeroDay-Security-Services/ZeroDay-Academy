@@ -1,12 +1,30 @@
-<%- include('_top', { appName: 'TeamHub API', pageTitle: 'Employee Directory', theme: 'api', tag: '/labs/api-excessive-data' }) %>
-<div class="lab-card">
-  <h1>Employee directory</h1>
-  <div id="card" class="lab-alert info">Loading…</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamDirectory — Profile</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="api">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">TeamDirectory</span><span class="tag">/labs/api-excessive-data</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Team Member Profile</h1>
+    <div id="profileCard" style="padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);">
+      <p class="lab-meta">Loading profile...</p>
+    </div>
+  </div>
 </div>
-<p class="lab-meta">The UI card only shows name and title. But what does the raw API response contain? Try: <a class="lab-link" href="/labs/api-excessive-data/api/profile/u_2291" target="_blank">/labs/api-excessive-data/api/profile/u_2291 ↗</a></p>
+
 <script>
-fetch('/labs/api-excessive-data/api/profile/u_2291').then(r => r.json()).then(d => {
-  document.getElementById('card').innerHTML = '<strong>' + d.name + '</strong><br>' + d.title;
-});
+  fetch('/labs/api-excessive-data/api/profile/u_2291')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var card = document.getElementById('profileCard');
+      card.innerHTML = '<div style="font-weight:600;font-size:1.2rem;">' + d.name + '</div>'
+        + '<div class="lab-meta">' + d.title + '</div>';
+    });
 </script>
-<%- include('_bottom') %>
+
+</body>
+</html>

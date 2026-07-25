@@ -1,30 +1,55 @@
-<%- include('_top', { appName: 'FileDrop', pageTitle: 'Upload', theme: 'upload', tag: '/labs/upload-path-traversal' }) %>
-<div class="lab-card">
-  <h1>Upload a file</h1>
-  <form id="uploadForm">
-    <label>Filename</label>
-    <input id="filename" value="notes.txt">
-    <label>Content</label>
-    <textarea id="content" rows="3">hello</textarea>
-    <button type="submit">Upload</button>
-  </form>
-</div>
-<div class="lab-card">
-  <h2>uploads/</h2>
-  <ul class="lab-list"><% uploaded.forEach(f => { %><li><%= f %></li><% }) %></ul>
-  <h2 style="margin-top:1.2rem;">protected/ (should be untouched by uploads)</h2>
-  <ul class="lab-list"><% protectedFiles.forEach(f => { %><li><%= f %></li><% }) %></ul>
-  <% if (flag) { %><div class="lab-alert success" style="margin-top:1rem;">You wrote into protected/! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
-  <form method="POST" action="/labs/upload-path-traversal/reset" style="margin-top:1rem;"><button type="submit" class="secondary">Reset lab</button></form>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FileManager — Upload</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="upload">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">FileManager</span><span class="tag">/labs/upload-path-traversal</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Upload File</h1>
+    <form id="uploadForm">
+      <label>File content</label>
+      <textarea id="fileContent" rows="4" placeholder="File content"></textarea>
+      <label>Filename</label>
+      <input id="uploadFilename" placeholder="document.txt">
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <div class="lab-card">
+    <h2>Uploaded Files</h2>
+    <ul class="lab-list">
+      <% uploaded.forEach(f => { %>
+        <li><%= f %></li>
+      <% }) %>
+      <% if (uploaded.length === 0) { %><li class="lab-meta">No files uploaded yet.</li><% } %>
+    </ul>
+  </div>
+
+  <% if (flag) { %>
+  <div class="lab-card">
+    <div class="lab-alert success">Flag: <span class="lab-flag"><%= flag %></span></div>
+  </div>
+  <% } %>
+
+  <form method="POST" action="/labs/upload-path-traversal/reset"><button type="submit" class="secondary">Reset lab</button></form>
 </div>
 
 <script>
-document.getElementById('uploadForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const filename = document.getElementById('filename').value;
-  const content = document.getElementById('content').value;
-  await fetch('/labs/upload-path-traversal/upload?filename=' + encodeURIComponent(filename), { method: 'POST', headers: {'Content-Type':'text/plain'}, body: content });
-  location.reload();
-});
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var content = document.getElementById('fileContent').value;
+    var filename = document.getElementById('uploadFilename').value || 'file.txt';
+    fetch('/labs/upload-path-traversal/upload?filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: content
+    }).then(function() { location.reload(); });
+  });
 </script>
-<%- include('_bottom') %>
+
+</body>
+</html>

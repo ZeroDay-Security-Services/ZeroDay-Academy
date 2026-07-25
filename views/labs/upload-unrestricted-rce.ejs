@@ -1,38 +1,56 @@
-<%- include('_top', { appName: 'WidgetForge', pageTitle: 'Custom Plugins', theme: 'upload', tag: '/labs/upload-unrestricted-rce' }) %>
-<div class="lab-card">
-  <h1>Upload a custom widget plugin</h1>
-  <form id="uploadForm">
-    <label>Filename</label>
-    <input id="filename" value="widget.js">
-    <label>Plugin JS</label>
-    <textarea id="code" rows="4">// this plugin does nothing yet</textarea>
-    <button type="submit">Upload</button>
-  </form>
-</div>
-<div class="lab-card">
-  <h2>Uploaded plugins</h2>
-  <ul class="lab-list" id="fileList">
-    <% files.forEach(f => { %>
-      <li><%= f.filename %> <button class="secondary" onclick="runPlugin('<%= f._id %>')">Run</button></li>
-    <% }) %>
-  </ul>
-  <div id="out" class="lab-code" style="margin-top:0.8rem; display:none;"></div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PluginEngine — Custom Widgets</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="upload">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">PluginEngine</span><span class="tag">/labs/upload-unrestricted-rce</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Custom Widget Plugins</h1>
+    <p>Upload a JavaScript widget file. The engine will execute it server-side to render your widget.</p>
+    <form id="uploadForm">
+      <label>Widget code</label>
+      <textarea id="widgetCode" rows="6" placeholder="// your widget code here"></textarea>
+      <label>Filename</label>
+      <input id="uploadFilename" value="widget.js">
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <div class="lab-card">
+    <h2>Uploaded Widgets</h2>
+    <ul class="lab-list">
+      <% files.forEach(f => { %>
+        <li>
+          <span><%= f.filename %></span>
+          <form method="POST" action="/labs/upload-unrestricted-rce/run/<%= f._id %>" style="display:inline;margin-left:1rem;">
+            <button type="submit" class="secondary" style="padding:0.25rem 0.75rem;font-size:0.85rem;">Run</button>
+          </form>
+        </li>
+      <% }) %>
+      <% if (files.length === 0) { %><li class="lab-meta">No widgets uploaded yet.</li><% } %>
+    </ul>
+    <% if (output) { %>
+      <div class="lab-alert info" style="margin-top:1rem;"><%= output %></div>
+    <% } %>
+  </div>
 </div>
 
 <script>
-document.getElementById('uploadForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const filename = document.getElementById('filename').value;
-  const code = document.getElementById('code').value;
-  await fetch('/labs/upload-unrestricted-rce/upload?filename=' + encodeURIComponent(filename), { method: 'POST', headers: {'Content-Type':'text/plain'}, body: code });
-  location.reload();
-});
-async function runPlugin(id) {
-  const res = await fetch('/labs/upload-unrestricted-rce/run/' + id, { method: 'POST' });
-  const data = await res.json();
-  const out = document.getElementById('out');
-  out.style.display = 'block';
-  out.textContent = data.output + (data.flag ? '\nFlag: ' + data.flag : '');
-}
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var code = document.getElementById('widgetCode').value;
+    var filename = document.getElementById('uploadFilename').value || 'widget.js';
+    fetch('/labs/upload-unrestricted-rce/upload?filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: code
+    }).then(function() { location.reload(); });
+  });
 </script>
-<%- include('_bottom') %>
+
+</body>
+</html>

@@ -1,12 +1,36 @@
-<%- include('_top', { appName: 'OpsConsole', pageTitle: 'Dashboard', theme: 'access', tag: '/labs/vertical-privesc · role: user' }) %>
-<div class="lab-card">
-  <h1>User dashboard</h1>
-  <p>You're signed in with a standard <code>user</code> role. There's no admin link here -- but is there an admin action?</p>
-</div>
-<% if (actionTaken) { %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorpPortal — Dashboard</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="privesc">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">CorpPortal</span><span class="tag">/labs/vertical-privesc</span></div>
+<div class="lab-wrap">
   <div class="lab-card">
-    <div class="lab-alert success">Admin action executed successfully. Flag: <span class="lab-flag"><%= flag %></span></div>
+    <h1>User Dashboard</h1>
+    <p>Logged in as: <strong>user</strong> (role: <%= role %>)</p>
+    <ul class="lab-list">
+      <li><a href="#">My Profile</a></li>
+      <li><a href="#">My Projects</a></li>
+      <li><a href="#">Notifications</a></li>
+    </ul>
   </div>
-<% } %>
 
-<%- include('_bottom') %>
+  <div class="lab-card">
+    <h2>Admin Functions</h2>
+    <% if (flag) { %>
+      <div class="lab-alert success">
+        Admin action executed successfully.
+        <br>Flag: <span class="lab-flag"><%= flag %></span>
+      </div>
+    <% } else { %>
+      <div class="lab-alert info" style="opacity:0.6;">
+        <span style="font-size:1.2rem;">🔒</span> These functions are restricted to administrators.
+      </div>
+    <% } %>
+  </div>
+
+</body>
+</html>

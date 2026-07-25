@@ -1,7 +1,3 @@
-// labs/horizontal-privesc.js
-// VULNERABILITY: Horizontal privilege escalation (CWE-639). You're logged
-// in as "alice"; the notes endpoint trusts the :username in the URL with
-// no check that it matches your own session identity.
 const express = require("express");
 const LabRecord = require("../models/LabRecord");
 const router = express.Router();
@@ -25,16 +21,14 @@ router.get("/", async (req, res) => {
 
 router.get("/note/:username", async (req, res) => {
   await ensureSeed();
-  // --- VULNERABLE: no check that :username matches the logged-in user (alice) ---
   const rec = await LabRecord.findOne({ labSlug: "horizontal-privesc", "data.username": req.params.username }).lean();
   const mine = await LabRecord.findOne({ labSlug: "horizontal-privesc", "data.username": "alice" }).lean();
   if (!rec) return res.status(404).render("labs/horizontal-privesc", { myNote: mine.data.note, note: null, error: "No such user.", username: req.params.username });
   res.render("labs/horizontal-privesc", { myNote: mine.data.note, note: rec.data, error: null, username: req.params.username });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/horizontal-privesc");
 });
 

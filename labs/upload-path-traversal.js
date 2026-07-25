@@ -1,8 +1,4 @@
-// labs/upload-path-traversal.js
-// VULNERABILITY: Path traversal on upload filenames (CWE-22). The uploaded
-// file's name is joined directly onto the destination directory with no
-// normalization or containment check, so a filename like
-// "../protected/pwned.txt" writes outside the intended uploads folder.
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -26,7 +22,6 @@ router.get("/", (req, res) => {
   });
 });
 
-// --- VULNERABLE: filename joined directly with no path.basename() / containment check ---
 router.post("/upload", express.text({ type: "*/*", limit: "10kb" }), (req, res) => {
   const filename = req.query.filename || "file.txt";
   const destination = path.join(uploadsDir, filename);

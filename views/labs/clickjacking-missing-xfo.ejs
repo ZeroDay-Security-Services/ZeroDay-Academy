@@ -1,15 +1,24 @@
-<%- include('_top', { appName: 'AccountCare', pageTitle: 'Danger Zone', theme: 'headers', tag: '/labs/clickjacking-missing-xfo' }) %>
-<div class="lab-card">
-  <h1>Danger zone</h1>
-  <% if (deleted) { %>
-    <div class="lab-alert success">Account deleted. Flag: <span class="lab-flag">ZDS{cl1ckj4ck1ng_st34ls_r34l_cl1cks}</span></div>
-  <% } else { %>
-    <form method="POST" action="/labs/clickjacking-missing-xfo/delete-account">
-      <button type="submit" class="danger">Delete my account</button>
-    </form>
-  <% } %>
-</div>
-<% if (!framed) { %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureApp — Account</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="clickjack">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">SecureApp</span><span class="tag">/labs/clickjacking-missing-xfo</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Account Settings</h1>
+    <% if (deleted) { %>
+      <div class="lab-alert success">Account deleted. Flag: <span class="lab-flag">ZDS{cl1ckj4ck1ng_m1ss1ng_fr4m3_pr0t3ct10n}</span></div>
+    <% } else { %>
+      <p>Manage your account settings below.</p>
+      <form method="POST" action="/labs/clickjacking-missing-xfo/delete-account">
+        <button type="submit" style="background:var(--danger,#dc3545);">Delete my account</button>
+      </form>
+    <% } %>
+  </div>
 
-<% } %>
-<%- include('_bottom') %>
+</body>
+</html>

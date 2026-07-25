@@ -1,4 +1,4 @@
-// routes/platform.js
+
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
@@ -13,7 +13,6 @@ function flagHash(flag) {
   return crypto.createHash("sha256").update(flag.trim()).digest("hex");
 }
 
-// ---------- Home ----------
 router.get("/", async (req, res) => {
   const [challengeCount, userCount, solveCount] = await Promise.all([
     Challenge.countDocuments(),
@@ -24,7 +23,6 @@ router.get("/", async (req, res) => {
   res.render("home", { title: "ZeroDay Academy", stats: { challengeCount, userCount, solveCount, domainCount: domains.length } });
 });
 
-// ---------- Auth ----------
 router.get("/register", (req, res) => {
   if (req.user) return res.redirect("/dashboard");
   res.render("register", { title: "Create Account", error: null });
@@ -76,7 +74,6 @@ router.post("/logout", (req, res) => {
   });
 });
 
-// ---------- Dashboard ----------
 router.get("/dashboard", requireAuth, async (req, res) => {
   const solveDocs = await Solve.find({ userId: req.user._id }).sort({ solvedAt: -1 }).populate("challengeId").lean();
   const solves = solveDocs.filter(s => s.challengeId).map(s => ({
@@ -103,7 +100,6 @@ router.get("/dashboard", requireAuth, async (req, res) => {
   res.render("dashboard", { title: "Dashboard", solves, totalChallenges, rank, categoryProgress });
 });
 
-// ---------- Challenges ----------
 router.get("/challenges", requireAuth, async (req, res) => {
   const allChallenges = await Challenge.find().sort({ orderIndex: 1 }).lean();
   const mySolves = await Solve.find({ userId: req.user._id }).lean();
@@ -141,14 +137,13 @@ router.post("/challenges/:slug/submit", requireAuth, async (req, res) => {
     await Solve.create({ userId: req.user._id, challengeId: challenge._id });
     await User.updateOne({ _id: req.user._id }, { $inc: { points: challenge.points } });
   } catch (e) {
-    // Unique index race -- treat as already solved.
+    
     return res.json({ ok: true, alreadySolved: true, message: "Already solved." });
   }
 
   res.json({ ok: true, alreadySolved: false, message: "Correct! Flag captured.", points: challenge.points });
 });
 
-// ---------- Leaderboard ----------
 router.get("/leaderboard", requireAuth, async (req, res) => {
   const users = await User.find().sort({ points: -1, createdAt: 1 }).limit(50).lean();
   const leaders = await Promise.all(users.map(async (u) => {
@@ -158,7 +153,6 @@ router.get("/leaderboard", requireAuth, async (req, res) => {
   res.render("leaderboard", { title: "Leaderboard", leaders });
 });
 
-// ---------- Profile ----------
 router.get("/profile", requireAuth, async (req, res) => {
   const solveDocs = await Solve.find({ userId: req.user._id }).sort({ solvedAt: -1 }).populate("challengeId").lean();
   const solves = solveDocs.filter(s => s.challengeId).map(s => ({
@@ -180,13 +174,11 @@ router.post("/profile", requireAuth, async (req, res) => {
   res.render("profile", { title: "My Profile", solves, error: null, success: "Profile updated." });
 });
 
-// ---------- Public API: ordered challenge list (for in-lab prev/next nav) ----------
 router.get("/api/challenge-order", async (req, res) => {
   const challenges = await Challenge.find().sort({ orderIndex: 1 }).select("slug title labPath -_id").lean();
   res.json(challenges);
 });
 
-// ---------- Company ----------
 router.get("/company", (req, res) => {
   res.render("company", { title: "About ZeroDay Security Services" });
 });

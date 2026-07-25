@@ -1,9 +1,4 @@
-// labs/xxe-svg-upload.js
-// VULNERABILITY: XXE via SVG upload (CWE-611). SVG is XML. The "avatar
-// processor" extracts a <title> for the alt-text using the same
-// unsafe entity-resolving approach as the profile importer -- so an
-// uploaded SVG with a SYSTEM entity reads local files, and the resolved
-// title is reflected straight back.
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -11,7 +6,7 @@ const router = express.Router();
 
 const labDir = path.join(__dirname, "..", "db", "xxe-svg-fs");
 if (!fs.existsSync(labDir)) fs.mkdirSync(labDir, { recursive: true });
-const secretPath = path.join(labDir, "flag.txt");
+const secretPath = path.join(labDir, ".htpasswd");
 if (!fs.existsSync(secretPath)) fs.writeFileSync(secretPath, "ZDS{xxe_v14_svg_upl04d_r34ds_l0c4l_f1l3s}\n");
 
 function resolveSystemPath(uri) {
@@ -19,8 +14,6 @@ function resolveSystemPath(uri) {
   return path.join(labDir, uri);
 }
 
-// --- VULNERABLE: same unsafe entity resolution as the profile importer,
-// now reachable through an "SVG avatar" upload flow. ---
 function vulnerableParse(xml) {
   const entityDefs = {};
   const entityRegex = /<!ENTITY\s+(\w+)\s+SYSTEM\s+"([^"]+)"\s*>/g;
@@ -46,7 +39,7 @@ function extractTag(xml, tag) {
 }
 
 router.get("/", (req, res) => {
-  res.render("labs/xxe-svg-upload", { svgInput: defaultSvg(), altText: null, error: null });
+  res.render("labs/xxe-svg-upload", { svgInput: "", altText: null, error: null });
 });
 
 router.post("/", (req, res) => {
@@ -56,15 +49,10 @@ router.post("/", (req, res) => {
     const resolved = vulnerableParse(svg);
     altText = extractTag(resolved, "title");
   } catch (e) {
-    error = e.message;
+    error = "Could not process your SVG.";
   }
   res.render("labs/xxe-svg-upload", { svgInput: svg, altText, error });
 });
-
-function defaultSvg() {
-  return `<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg">\n  <title>My Avatar</title>\n</svg>`;
-}
-
 
 router.post("/reset", (req, res) => {
   

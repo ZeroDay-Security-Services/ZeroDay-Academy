@@ -1,8 +1,3 @@
-// labs/jwt-alg-none.js
-// VULNERABILITY: Broken Authentication via JWT algorithm confusion
-// (CWE-347). The verification step accepts tokens with `alg: "none"` and
-// skips signature checking, so an attacker can hand-craft an unsigned token
-// with any claims (e.g. role: admin) and have it trusted.
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
@@ -14,14 +9,11 @@ function b64url(obj) {
   return Buffer.from(JSON.stringify(obj)).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-// --- VULNERABLE: decodes and trusts the token's own declared `alg`, and
-// explicitly permits "none" as an accepted algorithm alongside HS256. ---
 function vulnerableVerify(token) {
   const [headerB64] = token.split(".");
   const header = JSON.parse(Buffer.from(headerB64, "base64").toString("utf8"));
 
   if (header.alg === "none") {
-    // No signature check performed at all for "none" tokens.
     const payloadB64 = token.split(".")[1];
     return JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
   }
@@ -29,8 +21,16 @@ function vulnerableVerify(token) {
 }
 
 router.get("/", (req, res) => {
-  const userToken = jwt.sign({ username: "guest", role: "user" }, SECRET, { algorithm: "HS256", expiresIn: "1h" });
-  res.render("labs/jwt-alg-none", { issuedToken: userToken, verifyResult: null, error: null, flag: null });
+  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: null, error: null, flag: null });
+});
+
+router.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === "guest" && password === "guest123") {
+    const userToken = jwt.sign({ username: "guest", role: "user" }, SECRET, { algorithm: "HS256", expiresIn: "1h" });
+    return res.render("labs/jwt-alg-none", { issuedToken: userToken, verifyResult: null, error: null, flag: null });
+  }
+  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: null, error: "Invalid credentials.", flag: null });
 });
 
 router.post("/verify", (req, res) => {
@@ -40,15 +40,13 @@ router.post("/verify", (req, res) => {
     verifyResult = vulnerableVerify(token);
     if (verifyResult.role === "admin") flag = FLAG;
   } catch (e) {
-    error = e.message;
+    error = "Unauthorized.";
   }
-  const userToken = jwt.sign({ username: "guest", role: "user" }, SECRET, { algorithm: "HS256", expiresIn: "1h" });
-  res.render("labs/jwt-alg-none", { issuedToken: userToken, verifyResult, error, flag, submittedToken: token });
+  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: verifyResult ? { role: verifyResult.role } : null, error, flag });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/jwt-alg-none");
 });
 

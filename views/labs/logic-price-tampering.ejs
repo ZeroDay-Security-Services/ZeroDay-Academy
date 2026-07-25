@@ -1,24 +1,30 @@
-<%- include('_top', { appName: 'GearMarket', pageTitle: 'Checkout', theme: 'logic', tag: '/labs/logic-price-tampering' }) %>
-<div class="lab-card">
-  <h1>Prototype Zero-Day Scanner -- $1,200.00</h1>
-  <form id="checkoutForm">
-    <input type="hidden" id="price" value="1200">
-    <button type="submit">Buy now</button>
-  </form>
-  <% if (result) { %>
-    <div class="lab-alert <%= result.flag ? 'success' : 'info' %>">
-      Charged: $<%= result.charged %>
-      <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MegaStore — Purchase</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="logic">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">MegaStore</span><span class="tag">/labs/logic-price-tampering</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Secure Checkout</h1>
+    <div style="padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);margin-bottom:1rem;">
+      <div style="font-weight:600;font-size:1.1rem;">Elite Security Camera System</div>
+      <div class="lab-meta">$1,200.00</div>
     </div>
-  <% } %>
-</div>
+    <form method="POST" action="/labs/logic-price-tampering/checkout">
+      <input type="hidden" name="price" value="1200">
+      <button type="submit">Buy Now — $1,200.00</button>
+    </form>
+    <% if (result) { %>
+      <div class="lab-alert <%= result.flag ? 'success' : 'info' %>" style="margin-top:1rem;">
+        Charged: $<%= result.charged.toFixed(2) %>
+        <% if (result.flag) { %><br>Flag: <span class="lab-flag"><%= result.flag %></span><% } %>
+      </div>
+    <% } %>
+  </div>
 
-<script>
-document.getElementById('checkoutForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const price = document.getElementById('price').value;
-  const res = await fetch('/labs/logic-price-tampering/checkout', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'price=' + encodeURIComponent(price) });
-  document.open(); document.write(await res.text()); document.close();
-});
-</script>
-<%- include('_bottom') %>
+</body>
+</html>

@@ -1,7 +1,22 @@
-<%- include('_top', { appName: 'LinkShortener', pageTitle: 'Redirector', theme: 'headers', tag: '/labs/crlf-header-injection' }) %>
-<div class="lab-card">
-  <h1>Redirect helper</h1>
-  <p><code>GET /labs/crlf-header-injection/go?dest=&lt;url&gt;</code> issues a redirect built from raw header text.</p>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkRedirector — Redirect Service</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="headers">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">LinkRedirector</span><span class="tag">/labs/crlf-header-injection</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>URL Redirect Service</h1>
+    <p>Enter a destination URL to be redirected.</p>
+    <form method="GET" action="/labs/crlf-header-injection/go">
+      <label>Destination URL</label>
+      <input name="dest" placeholder="https://example.com" autocomplete="off">
+      <button type="submit">Go</button>
+    </form>
+  </div>
 
-<%- include('_bottom') %>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// models/LabComment.js -- shared fixture data for the stored-xss lab
+
 const { mongoose } = require("../db/mongo");
 const schema = new mongoose.Schema({
   author: { type: String, required: true },

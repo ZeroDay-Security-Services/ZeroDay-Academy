@@ -1,17 +1,38 @@
-<%- include('_top', { appName: 'MarketingSite', pageTitle: isAdminPage ? 'Admin Panel' : 'Home', theme: 'access', tag: '/labs/forced-browse-admin' }) %>
-<% if (!isAdminPage) { %>
-  <div class="lab-card">
-    <h1>Welcome to MarketingSite</h1>
-    <p>A public marketing site with no visible login or admin link anywhere.</p>
-  </div>
-  
-  <div class="lab-card">
-    <p class="lab-meta" style="font-size:0.7rem; opacity:0.4;"><!-- TODO: remove before launch: /panel-x29a --></p>
-  </div>
-<% } else { %>
-  <div class="lab-card">
-    <h1>🔓 Admin Panel</h1>
-    <div class="lab-alert success">No authentication was required to reach this page. Flag: <span class="lab-flag"><%= flag %></span></div>
-  </div>
-<% } %>
-<%- include('_bottom') %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorpSite — <% if (isAdminPage) { %>Admin Panel<% } else { %>Home<% } %></title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="privesc">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">CorpSite</span><span class="tag">/labs/forced-browse-admin</span></div>
+<div class="lab-wrap">
+  <% if (!isAdminPage) { %>
+    <div class="lab-card">
+      <h1>Welcome to CorpSite</h1>
+      <p>The secure corporate platform for authorized employees.</p>
+      <ul class="lab-list">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Investor Relations</a></li>
+      </ul>
+    </div>
+  <% } else { %>
+    <div class="lab-card">
+      <h1>Admin Panel</h1>
+      <div class="lab-alert success">
+        Access granted — admin panel unlocked.
+        <% if (flag) { %><br>Flag: <span class="lab-flag"><%= flag %></span><% } %>
+      </div>
+      <ul class="lab-list">
+        <li>Manage Users</li>
+        <li>View Logs</li>
+        <li>System Configuration</li>
+      </ul>
+    </div>
+  <% } %>
+
+</body>
+</html>

@@ -1,8 +1,3 @@
-// labs/insecure-deserialization.js
-// VULNERABILITY: Insecure Deserialization (CWE-502). The "remember me"
-// cookie is a base64-encoded JSON object that the server deserializes and
-// trusts completely -- no signature (e.g. HMAC) protects it from tampering,
-// so an attacker can modify fields like `role` before the server reads them.
 const express = require("express");
 const router = express.Router();
 
@@ -12,31 +7,37 @@ function makeCookie(obj) {
   return Buffer.from(JSON.stringify(obj)).toString("base64");
 }
 
-// --- VULNERABLE: no signature/HMAC, just base64(JSON.stringify(...)) ---
 function readCookie(raw) {
   return JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
 }
 
 router.get("/", (req, res) => {
-  let rememberMe = req.cookies.rememberMe;
-  if (!rememberMe) {
-    rememberMe = makeCookie({ username: "guest", role: "user" });
-    res.cookie("rememberMe", rememberMe, { httpOnly: false, sameSite: "lax" });
+  let sessionCookie = req.cookies._sess_prefs;
+  if (!sessionCookie) {
+    sessionCookie = makeCookie({ username: "guest", role: "user" });
+    res.cookie("_sess_prefs", sessionCookie, { httpOnly: false, sameSite: "lax" });
   }
+
+  res.cookie("_ga_track", "GA1.2.1847502983.1719430800", { httpOnly: false, sameSite: "lax" });
+  res.cookie("cf_bm", "aJk3mNqP9sT2vX7yB4cF6gH8", { httpOnly: false, sameSite: "lax" });
+  res.cookie("_ui_locale", "en-US", { httpOnly: false, sameSite: "lax" });
 
   let session = null, error = null, flag = null;
   try {
-    session = readCookie(rememberMe);
+    session = readCookie(sessionCookie);
     if (session.role === "admin") flag = FLAG;
   } catch (e) {
-    error = "Could not deserialize rememberMe cookie: " + e.message;
+    error = "Session error. Please clear your cookies and try again.";
   }
 
-  res.render("labs/insecure-deserialization", { session, error, flag, exampleCookie: makeCookie({ username: "guest", role: "user" }) });
+  res.render("labs/insecure-deserialization", { session, error, flag });
 });
 
 router.post("/reset", (req, res) => {
-  res.clearCookie("rememberMe");
+  res.clearCookie("_sess_prefs");
+  res.clearCookie("_ga_track");
+  res.clearCookie("cf_bm");
+  res.clearCookie("_ui_locale");
   res.redirect("/labs/insecure-deserialization");
 });
 

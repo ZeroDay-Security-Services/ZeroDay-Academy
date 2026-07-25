@@ -1,21 +1,30 @@
-<%- include('_top', { appName: 'ReportHub', pageTitle: 'My Reports', theme: 'access', tag: '/labs/file-access-idor · logged in as guest' }) %>
-<div class="lab-card">
-  <h1>My reports</h1>
-  <ul class="lab-list">
-    <% myFiles.forEach(f => { %>
-      <li><%= f.filename %> — <a class="lab-link" href="/labs/file-access-idor/download/<%= f._id %>">view</a> <span class="lab-meta">(id: <%= f._id %>)</span></li>
-    <% }) %>
-  </ul>
-</div>
-<div class="lab-card">
-  <h2>View report by ID</h2>
-  <form method="GET" action="" onsubmit="window.location='/labs/file-access-idor/download/'+this.fid.value; return false;">
-    <label>Report ID</label>
-    <input name="fid" placeholder="Mongo ObjectId">
-    <button type="submit">Fetch</button>
-  </form>
-  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-  <% if (file) { %><div class="lab-alert info"><strong><%= file.filename %></strong><br><%= file.content %></div><% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocStore — My Files</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="idor">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">DocStore</span><span class="tag">/labs/file-access-idor</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>My Documents</h1>
+    <ul class="lab-list">
+      <% myFiles.forEach(f => { %>
+        <li><a href="/labs/file-access-idor/download/<%= f._id %>"><%= f.filename %></a></li>
+      <% }) %>
+    </ul>
+  </div>
 
-<%- include('_bottom') %>
+  <% if (file) { %>
+  <div class="lab-card">
+    <h2><%= file.filename %></h2>
+    <pre style="white-space:pre-wrap;"><%= file.content %></pre>
+  </div>
+  <% } %>
+
+  <% if (error) { %><div class="lab-card"><div class="lab-alert error"><%= error %></div></div><% } %>
+
+</body>
+</html>

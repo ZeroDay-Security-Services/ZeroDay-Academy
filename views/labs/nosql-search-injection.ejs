@@ -1,14 +1,23 @@
-<%- include('_top', { appName: 'ClientPortal Shop', pageTitle: 'Catalog', theme: 'nosql', tag: '/labs/nosql-search-injection' }) %>
-<div class="lab-card">
-  <h1>Catalog (released items only)</h1>
-  <p class="lab-meta">Query used: <code><%= rawQuery %></code></p>
-  <ul class="lab-list">
-    <% results.forEach(r => { %><li><%= r.data.name %> <span class="lab-badge"><%= r.data.released ? 'released' : 'unreleased' %></span></li><% }) %>
-    <% if (results.length === 0) { %><li class="lab-meta">No results.</li><% } %>
-  </ul>
-</div>
-<div class="lab-card">
-  <h2>Try a different query</h2>
-  <p class="lab-meta">The normal link is <code>?</code> (no params, defaults to released=true). Try manipulating the query-string to use NoSQL operators instead of plain strings.</p>
-</div>
-<%- include('_bottom') %>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureShop — Catalog</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="nosql">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">SecureShop</span><span class="tag">/labs/nosql-search-injection</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Product Catalog</h1>
+    <p>Browse our available products.</p>
+    <ul class="lab-list">
+      <% results.forEach(r => { %>
+        <li><%= r.data.name %></li>
+      <% }) %>
+      <% if (results.length === 0) { %><li class="lab-meta">No products available.</li><% } %>
+    </ul>
+  </div>
+
+</body>
+</html>

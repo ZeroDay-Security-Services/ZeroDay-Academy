@@ -2,46 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BillPeak — My Invoices</title>
+<title>InvoiceHub — Your Invoices</title>
 <link rel="stylesheet" href="/css/lab.css">
 </head>
-<body data-theme="access">
-<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">BillPeak</span><span class="tag">/labs/idor-invoices · logged in as guest</span></div>
+<body data-theme="idor">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">InvoiceHub</span><span class="tag">/labs/idor-invoices</span></div>
 <div class="lab-wrap">
   <div class="lab-card">
-    <h1>My Invoices</h1>
+    <h1>Your Invoices</h1>
+    <ul class="lab-list">
+      <% myInvoices.forEach(inv => { %>
+        <li><a href="/labs/idor-invoices/<%= inv.data.id %>"><%= inv.data.id %></a> — $<%= inv.data.amount %> (<%= inv.data.status %>)</li>
+      <% }) %>
+    </ul>
+  </div>
+
+  <% if (selectedInvoice) { %>
+  <div class="lab-card">
+    <h2>Invoice Detail</h2>
     <table class="lab-table">
-      <thead><tr><th>ID</th><th>Amount</th><th>Status</th><th></th></tr></thead>
-      <tbody>
-        <% myInvoices.forEach(inv => { %>
-          <tr>
-            <td>#<%= inv.invoiceNumber %></td>
-            <td><%= inv.amount %></td>
-            <td><%= inv.status %></td>
-            <td><a class="lab-link" href="/labs/idor-invoices/invoice/<%= inv.invoiceNumber %>">View</a></td>
-          </tr>
-        <% }) %>
-      </tbody>
+      <tr><th>Field</th><th>Value</th></tr>
+      <% Object.entries(selectedInvoice).forEach(([k,v]) => { %>
+        <tr><td><%= k %></td><td><%= v %></td></tr>
+      <% }) %>
     </table>
   </div>
+  <% } %>
 
-  <div class="lab-card">
-    <h2>View invoice by ID</h2>
-    <form method="GET" action="" onsubmit="window.location='/labs/idor-invoices/invoice/'+this.id.value; return false;">
-      <label>Invoice ID</label>
-      <input id="id" name="id" type="number" min="1" placeholder="e.g. 1">
-      <button type="submit">Fetch invoice</button>
-    </form>
-
-    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-    <% if (invoice) { %>
-      <div class="lab-alert <%= invoice.ownerUsername === 'guest' ? 'success' : 'info' %>">
-        <strong>Invoice #<%= invoice.invoiceNumber %></strong> — owner: <%= invoice.ownerUsername %><br>
-        Amount: <%= invoice.amount %><br>
-        Status: <%= invoice.status %>
-      </div>
-    <% } %>
-  </div>
+  <% if (error) { %><div class="lab-card"><div class="lab-alert error"><%= error %></div></div><% } %>
 
 </body>
 </html>

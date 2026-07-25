@@ -1,4 +1,4 @@
-// middleware/auth.js
+
 const User = require("../models/User");
 
 function requireAuth(req, res, next) {

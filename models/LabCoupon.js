@@ -1,4 +1,4 @@
-// models/LabCoupon.js -- single-use coupons for the business-logic race condition lab
+
 const { mongoose } = require("../db/mongo");
 const schema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },

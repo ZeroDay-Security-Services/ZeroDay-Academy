@@ -1,35 +1,49 @@
-<%- include('_top', { appName: 'PixelHost', pageTitle: 'Avatar Upload', theme: 'upload', tag: '/labs/upload-content-type-bypass' }) %>
-<div class="lab-card">
-  <h1>Upload an avatar (PNG/JPEG only)</h1>
-  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-  <form id="uploadForm">
-    <label>Filename</label>
-    <input id="filename" value="avatar.png">
-    <label>Declared Content-Type (sent as a header)</label>
-    <input id="declaredType" value="image/png">
-    <label>File content</label>
-    <textarea id="content" rows="4">binary-image-data-placeholder</textarea>
-    <button type="submit">Upload</button>
-  </form>
-</div>
-<div class="lab-card">
-  <h2>Gallery</h2>
-  <ul class="lab-list">
-    <% files.forEach(f => { %><li><%= f.filename %> — <a class="lab-link" href="/labs/upload-content-type-bypass/view/<%= f._id %>" target="_blank">view ↗</a></li><% }) %>
-    <% if (files.length === 0) { %><li class="lab-meta">No uploads yet.</li><% } %>
-  </ul>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediaVault — Upload</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="upload">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">MediaVault</span><span class="tag">/labs/upload-content-type-bypass</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Upload Avatar</h1>
+    <p>Only PNG and JPEG images are accepted.</p>
+    <form id="uploadForm">
+      <label>File content</label>
+      <textarea id="fileContent" rows="4" placeholder="File content here"></textarea>
+      <label>Filename</label>
+      <input id="uploadFilename" placeholder="avatar.png">
+      <button type="submit">Upload</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  </div>
+
+  <div class="lab-card">
+    <h2>Uploaded Files</h2>
+    <ul class="lab-list">
+      <% files.forEach(f => { %>
+        <li><a href="/labs/upload-content-type-bypass/view/<%= f._id %>" target="_blank"><%= f.filename %></a> <span class="lab-meta">(<%= f.contentType %>)</span></li>
+      <% }) %>
+      <% if (files.length === 0) { %><li class="lab-meta">No files uploaded.</li><% } %>
+    </ul>
+  </div>
 </div>
 
 <script>
-document.getElementById('uploadForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const filename = document.getElementById('filename').value;
-  const declaredType = document.getElementById('declaredType').value;
-  const content = document.getElementById('content').value;
-  await fetch('/labs/upload-content-type-bypass/upload?filename=' + encodeURIComponent(filename), {
-    method: 'POST', headers: { 'Content-Type': 'text/plain', 'X-Declared-Type': declaredType }, body: content
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var content = document.getElementById('fileContent').value;
+    var filename = document.getElementById('uploadFilename').value || 'avatar.png';
+    fetch('/labs/upload-content-type-bypass/upload?filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain', 'X-Declared-Type': 'image/png' },
+      body: content
+    }).then(function() { location.reload(); });
   });
-  location.reload();
-});
 </script>
-<%- include('_bottom') %>
+
+</body>
+</html>

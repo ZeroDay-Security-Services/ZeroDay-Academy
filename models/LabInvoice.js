@@ -1,4 +1,4 @@
-// models/LabInvoice.js -- shared fixture data for the idor-invoices lab
+
 const { mongoose } = require("../db/mongo");
 const schema = new mongoose.Schema({
   invoiceNumber: { type: Number, required: true, unique: true },

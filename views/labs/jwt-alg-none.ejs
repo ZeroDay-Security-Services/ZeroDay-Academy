@@ -2,36 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ApiGateway — Token Playground</title>
+<title>TokenAuth — API</title>
 <link rel="stylesheet" href="/css/lab.css">
 </head>
 <body data-theme="auth">
-<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">ApiGateway</span><span class="tag">/labs/jwt-alg-none</span></div>
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">TokenAuth API</span><span class="tag">/labs/jwt-alg-none</span></div>
 <div class="lab-wrap">
   <div class="lab-card">
-    <h1>Your issued token</h1>
-    <p class="lab-meta">This is a freshly signed low-privilege token for the <code>guest</code> user.</p>
-    <div class="lab-code"><%= issuedToken %></div>
+    <h1>Login</h1>
+    <p>Sign in to receive your API token.</p>
+    <form method="POST" action="/labs/jwt-alg-none/login">
+      <label>Username</label>
+      <input name="username" value="guest" autocomplete="off">
+      <label>Password</label>
+      <input name="password" type="password" value="guest123" autocomplete="off">
+      <button type="submit">Sign in</button>
+    </form>
+    <% if (error && !issuedToken && !verifyResult) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <% if (issuedToken) { %>
+      <div class="lab-alert success" style="margin-top:1rem;">
+        <strong>Your API token:</strong>
+        <div class="lab-code" style="margin-top:0.5rem;word-break:break-all;"><%= issuedToken %></div>
+      </div>
+    <% } %>
   </div>
 
   <div class="lab-card">
-    <h2>Verify a token</h2>
-    <p>Submit any JWT and the API will verify and decode it.</p>
+    <h2>Verify Token</h2>
+    <p>Submit a token to access protected resources.</p>
     <form method="POST" action="/labs/jwt-alg-none/verify">
       <label>Token</label>
-      <textarea name="token" rows="3"><%= typeof submittedToken !== 'undefined' ? submittedToken : issuedToken %></textarea>
+      <textarea name="token" rows="3" placeholder="Paste your token here"></textarea>
       <button type="submit">Verify</button>
     </form>
-    <% if (error) { %><div class="lab-alert error">Verification failed: <%= error %></div><% } %>
     <% if (verifyResult) { %>
-      <p class="lab-meta" style="margin-top:1rem;">Decoded payload</p>
-      <div class="lab-code"><%= JSON.stringify(verifyResult, null, 2) %></div>
+      <div class="lab-alert success">
+        Authorized. Role: <strong><%= verifyResult.role %></strong>
+        <% if (flag) { %><br>Flag: <span class="lab-flag"><%= flag %></span><% } %>
+      </div>
     <% } %>
-    <% if (flag) { %>
-      <div class="lab-alert success">Admin claim accepted. Flag: <span class="lab-flag"><%= flag %></span></div>
-    <% } %>
+    <% if (error && !issuedToken) { %><div class="lab-alert error"><%= error %></div><% } %>
   </div>
-  
 
 </body>
 </html>

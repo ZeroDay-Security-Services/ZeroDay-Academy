@@ -1,6 +1,3 @@
-// labs/file-access-idor.js
-// VULNERABILITY: IDOR on a file-download endpoint (CWE-639). Reports are
-// fetched by a predictable, sequential numeric ID with no ownership check.
 const express = require("express");
 const LabFile = require("../models/LabFile");
 const router = express.Router();
@@ -24,16 +21,14 @@ router.get("/", async (req, res) => {
 
 router.get("/download/:id", async (req, res) => {
   await ensureSeed();
-  // --- VULNERABLE: no ownership check on the requested file id ---
   const file = await LabFile.findById(req.params.id).lean();
   const mine = await LabFile.find({ labSlug: "file-access-idor", filename: /^guest-report/ }).lean();
   if (!file) return res.status(404).render("labs/file-access-idor", { myFiles: mine, file: null, error: "No such file." });
   res.render("labs/file-access-idor", { myFiles: mine, file, error: null });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/file-access-idor");
 });
 

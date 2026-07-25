@@ -1,14 +1,30 @@
-<%- include('_top', { appName: 'PixelHost', pageTitle: 'SVG Avatar', theme: 'xxe', tag: '/labs/xxe-svg-upload' }) %>
-<div class="lab-card">
-  <h1>Upload an SVG avatar</h1>
-  <p>We extract the <code>&lt;title&gt;</code> for accessible alt-text.</p>
-  <form method="POST" action="/labs/xxe-svg-upload">
-    <label>SVG content</label>
-    <textarea name="svg" rows="8"><%= svgInput %></textarea>
-    <button type="submit">Upload</button>
-  </form>
-  <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
-  <% if (altText) { %><div class="lab-alert success">Extracted alt text: <%= altText %></div><% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AvatarProcessor — Upload</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="xxe">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">AvatarProcessor</span><span class="tag">/labs/xxe-svg-upload</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Upload SVG Avatar</h1>
+    <p>Paste your SVG markup to set your avatar. The system extracts the <code>&lt;title&gt;</code> for alt-text.</p>
+    <form method="POST" action="/labs/xxe-svg-upload">
+      <label>SVG Markup</label>
+      <textarea name="svg" rows="8" placeholder="Paste SVG here"><%= svgInput %></textarea>
+      <button type="submit">Process</button>
+    </form>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+  </div>
 
-<%- include('_bottom') %>
+  <% if (altText) { %>
+  <div class="lab-card">
+    <h2>Extracted Alt-Text</h2>
+    <div style="padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);"><%= altText %></div>
+  </div>
+  <% } %>
+
+</body>
+</html>

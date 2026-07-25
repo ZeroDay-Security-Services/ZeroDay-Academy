@@ -1,21 +1,34 @@
-<%- include('_top', { appName: 'TeamHub', pageTitle: 'Edit Profile', theme: 'access', tag: '/labs/mass-assignment-role' }) %>
-<div class="lab-card">
-  <h1>Edit profile</h1>
-  <p>Current profile: <span class="lab-badge"><%= JSON.stringify(profile) %></span></p>
-  <form id="updateForm">
-    <label>Profile JSON to submit</label>
-    <textarea id="json" rows="4">{"displayName":"guest_user_2"}</textarea>
-    <button type="submit">Update profile</button>
-  </form>
-  <% if (flag) { %><div class="lab-alert success" style="margin-top:1rem;">Role is admin! Flag: <span class="lab-flag"><%= flag %></span></div><% } %>
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfileSync — Settings</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="privesc">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">ProfileSync</span><span class="tag">/labs/mass-assignment-role</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Edit Profile</h1>
+    <p>Update your display name.</p>
+    <form method="POST" action="/labs/mass-assignment-role/update">
+      <label>Display Name</label>
+      <input name="json" placeholder='{"displayName":"new_name"}' value='{"displayName":"<%= profile.displayName %>"}'>
+      <button type="submit">Save</button>
+    </form>
+    <table class="lab-table" style="margin-top:1rem;">
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Display Name</td><td><%= profile.displayName %></td></tr>
+      <tr><td>Role</td><td><%= profile.role %></td></tr>
+    </table>
+    <% if (flag) { %>
+      <div class="lab-alert success" style="margin-top:1rem;">
+        Admin role granted. Flag: <span class="lab-flag"><%= flag %></span>
+      </div>
+    <% } %>
+  </div>
 
-<script>
-document.getElementById('updateForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const json = document.getElementById('json').value;
-  await fetch('/labs/mass-assignment-role/update', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'json=' + encodeURIComponent(json) });
-  location.reload();
-});
-</script>
-<%- include('_bottom') %>
+  <form method="POST" action="/labs/mass-assignment-role/reset"><button type="submit" class="secondary">Reset lab</button></form>
+
+</body>
+</html>

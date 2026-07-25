@@ -10,10 +10,10 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Staff Login</h1>
-    <p>Internal portal for ClientPortal staff. Unauthorized access is prohibited (allegedly).</p>
+    <p>Internal portal for ClientPortal staff. Unauthorized access is prohibited.</p>
 
     <% if (result && result.success === false) { %>
-      <div class="lab-alert error">Login failed: no matching account.</div>
+      <div class="lab-alert error">Invalid username or password.</div>
     <% } %>
     <% if (result && result.success) { %>
       <div class="lab-alert success">
@@ -28,13 +28,18 @@
       <input name="username" autocomplete="off">
       <label>Password</label>
       <input name="password" type="text" autocomplete="off">
+      <label>Department</label>
+      <select name="department" style="margin-bottom:1rem;">
+        <option value="engineering">Engineering</option>
+        <option value="sales">Sales</option>
+        <option value="support">Support</option>
+        <option value="hr">Human Resources</option>
+      </select>
+      <div style="margin-bottom:1rem;">
+        <label style="display:inline;font-weight:normal;"><input type="checkbox" name="remember" value="1"> Remember me</label>
+      </div>
       <button type="submit">Sign in</button>
     </form>
-
-    <% if (query) { %>
-      <p class="lab-meta" style="margin-top:1rem;">Debug: query executed by the server</p>
-      <div class="lab-code"><%= query %></div>
-    <% } %>
   </div>
 
 </body>

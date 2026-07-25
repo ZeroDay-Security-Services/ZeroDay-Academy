@@ -1,9 +1,3 @@
-// labs/nosql-regex-extraction.js
-// VULNERABILITY: Blind NoSQL injection via unsanitized $regex (CWE-943).
-// The "check if a code is valid" endpoint passes user input directly as a
-// MongoDB $regex operator. Anchored regex probes (^Z, ^ZD, ^ZDS...) let an
-// attacker extract a secret value character by character purely from a
-// true/false "matches" response -- against the real database.
 const express = require("express");
 const LabRecord = require("../models/LabRecord");
 const router = express.Router();
@@ -24,7 +18,6 @@ router.post("/probe", async (req, res) => {
   const pattern = req.body.pattern || "";
   let matched = false;
   try {
-    // --- VULNERABLE: raw user input used directly as a $regex operator ---
     const doc = await LabRecord.findOne({ labSlug: "nosql-regex-extraction", "data.code": { $regex: pattern } }).lean();
     matched = !!doc;
   } catch (e) {
@@ -41,9 +34,8 @@ router.post("/check", async (req, res) => {
   res.render("labs/nosql-regex-extraction", { matchResult: null, checkResult: { correct, flag: correct ? doc.data.code : null } });
 });
 
-
 router.post("/reset", (req, res) => {
-  
+
   res.redirect("/labs/nosql-regex-extraction");
 });
 

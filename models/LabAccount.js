@@ -1,4 +1,4 @@
-// models/LabAccount.js -- shared fixture data for the sqli-login lab
+
 const { mongoose } = require("../db/mongo");
 const schema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },

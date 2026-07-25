@@ -1,4 +1,4 @@
-// models/LabToken.js -- password reset / 2FA / misc token records
+
 const { mongoose } = require("../db/mongo");
 const schema = new mongoose.Schema({
   labSlug: { type: String, required: true, index: true },

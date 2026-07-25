@@ -1,8 +1,3 @@
-// labs/clickjacking-missing-xfo.js
-// VULNERABILITY: Clickjacking via missing frame protection (CWE-1021). No
-// X-Frame-Options or CSP frame-ancestors header is set, so the page can be
-// embedded in an invisible iframe on an attacker's page and a victim can
-// be tricked into clicking a sensitive button they never intentionally saw.
 const express = require("express");
 const router = express.Router();
 
@@ -13,7 +8,6 @@ function getState(req) {
 
 router.get("/", (req, res) => {
   const s = getState(req);
-  // --- VULNERABLE: no X-Frame-Options / frame-ancestors set at all ---
   res.render("labs/clickjacking-missing-xfo", { deleted: s.deleted, framed: false });
 });
 
@@ -38,7 +32,6 @@ router.get("/frame-target", (req, res) => {
   const s = getState(req);
   res.render("labs/clickjacking-missing-xfo", { deleted: s.deleted, framed: true });
 });
-
 
 router.post("/reset", (req, res) => {
   req.session.clickjackLab = null;

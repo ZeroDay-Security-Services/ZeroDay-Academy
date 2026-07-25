@@ -1,4 +1,4 @@
-// models/Solve.js
+
 const { mongoose } = require("../db/mongo");
 
 const solveSchema = new mongoose.Schema({

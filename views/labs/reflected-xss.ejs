@@ -17,7 +17,6 @@
       </div>
     </form>
     <% if (q) { %>
-      <!-- VULNERABLE: `q` is injected into the page unescaped -->
       <p>Showing results for: <%- q %></p>
     <% } %>
   </div>
@@ -31,7 +30,15 @@
     </ul>
   </div>
 
-  
+  <div class="lab-card">
+    <h2>Stay Updated</h2>
+    <form onsubmit="event.preventDefault(); this.querySelector('.msg').textContent='Subscribed!';">
+      <label>Email Newsletter</label>
+      <input type="email" placeholder="your@email.com">
+      <button type="submit" class="secondary">Subscribe</button>
+      <span class="msg lab-meta"></span>
+    </form>
+  </div>
 
 </body>
 </html>

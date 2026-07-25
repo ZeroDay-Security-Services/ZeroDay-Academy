@@ -1,22 +1,33 @@
-<%- include('_top', { appName: 'AccountCare', pageTitle: 'Password Reset', theme: 'headers', tag: '/labs/host-header-poisoning' }) %>
-<div class="lab-card">
-  <h1>Request a password reset link</h1>
-  <p>The reset email link is built from this request's own Host header.</p>
-  <button onclick="sendReset()">Request reset link</button>
-  <div id="out" style="margin-top:1rem;"></div>
-</div>
-
-<div class="lab-code" id="curlCmd"></div>
-<script>
-  document.getElementById('curlCmd').innerText = `curl -X POST -H "Host: evil-attacker.test" ${window.location.origin}/labs/host-header-poisoning/request-reset`;
-async function sendReset() {
-  const res = await fetch('/labs/host-header-poisoning/request-reset', { method: 'POST' });
-  const html = await res.text();
-  document.getElementById('out').innerHTML = new DOMParser().parseFromString(html, 'text/html').getElementById('resultBox').outerHTML;
-}
-</script>
-<div id="resultBoxWrap" style="display:none;">
-  <div id="resultBox" class="lab-alert info">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAuth — Password Reset</title>
+<link rel="stylesheet" href="/css/lab.css">
+</head>
+<body data-theme="headers">
+<div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">SecureAuth</span><span class="tag">/labs/host-header-poisoning</span></div>
+<div class="lab-wrap">
+  <div class="lab-card">
+    <h1>Forgot Password</h1>
+    <p>Enter your email to receive a password reset link.</p>
+    <form method="POST" action="/labs/host-header-poisoning/request-reset">
+      <label>Email</label>
+      <input name="email" type="email" placeholder="user@example.com" autocomplete="off">
+      <button type="submit">Send reset link</button>
+    </form>
   </div>
-</div>
-<%- include('_bottom') %>
+
+  <% if (link) { %>
+  <div class="lab-card">
+    <h2>Reset Link Generated</h2>
+    <p>The following link was sent to the user's email:</p>
+    <div class="lab-code" style="word-break:break-all;"><%= link %></div>
+    <% if (flag) { %>
+      <div class="lab-alert success" style="margin-top:1rem;">Host header poisoned! Flag: <span class="lab-flag"><%= flag %></span></div>
+    <% } %>
+  </div>
+  <% } %>
+
+</body>
+</html>

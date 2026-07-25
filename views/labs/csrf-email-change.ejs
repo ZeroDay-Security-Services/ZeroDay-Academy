@@ -20,31 +20,10 @@
     <% } %>
 
     <form method="POST" action="/labs/csrf-email-change/change-email">
-      <label>Change email (legitimate form — no CSRF token)</label>
+      <label>New email address</label>
       <input name="email" type="email" placeholder="new@email.test">
       <button type="submit">Update email</button>
     </form>
-  </div>
-
-  <div class="lab-card">
-    <h2>Craft your exploit page</h2>
-    <p class="lab-meta">This textarea is hosted at <code>/labs/csrf-email-change/exploit</code> exactly as written — it's your "attacker-controlled site."</p>
-    <form method="POST" action="/labs/csrf-email-change/craft">
-      <textarea name="html" rows="8"><%= hostedExploit %></textarea>
-      <button type="submit" class="secondary">Save exploit page</button>
-    </form>
-    <p class="lab-meta" style="margin-top:0.75rem;">Preview: <a class="lab-link" href="/labs/csrf-email-change/exploit" target="_blank">/labs/csrf-email-change/exploit ↗</a></p>
-  </div>
-
-  <div class="lab-card">
-    <h2>Simulate the victim clicking your link</h2>
-    <p class="lab-meta">This triggers an always-authenticated headless "victim browser" to load your exploit page exactly as saved above.</p>
-    <form method="POST" action="/labs/csrf-email-change/simulate-victim-visit">
-      <button type="submit">Send victim to exploit page</button>
-    </form>
-    <% if (typeof victimVisited !== 'undefined' && victimVisited) { %>
-      <div class="lab-alert info" style="margin-top:0.9rem;">Victim visited your page. Resulting email: <strong><%= victimEmail %></strong></div>
-    <% } %>
   </div>
 
   <form method="POST" action="/labs/csrf-email-change/reset"><button type="submit" class="secondary">Reset lab</button></form>
