@@ -1,47 +1,86 @@
-const express = require("express");
-const LabRecord = require("../models/LabRecord");
+'use strict';
+
+const express = require('express');
+const LabData = require('../models/LabData');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-async function ensureSeed() {
-  const count = await LabRecord.countDocuments({ labSlug: "nosql-expr-injection" });
-  if (count === 0) {
-    await LabRecord.create({ labSlug: "nosql-expr-injection", kind: "vault", data: { name: "vault-1", secret: "ZDS{3xpr3ss10n_1nj3ct10n_v14_expr_0p3r4t0r}" } });
+async function vault(req) {
+  let record = await LabData.findOne({ instanceId: req.lab.instance._id, key: 'vault' });
+  if (!record) {
+    record = await LabData.create({
+      instanceId: req.lab.instance._id,
+      userId: req.user._id,
+      challengeId: req.lab.challenge._id,
+      key: 'vault',
+      data: { name: 'vault-1', secret: req.lab.flag() }
+    });
   }
+  return record;
 }
 
-router.get("/", (req, res) => {
-  res.render("labs/nosql-expr-injection", { matchResult: null, checkResult: null });
+router.get('/', async (req, res) => {
+  await vault(req);
+  res.render('labs/nosql-expr-injection', { matchResult: null, checkResult: null });
 });
 
-router.post("/probe", async (req, res) => {
-  await ensureSeed();
-  let filterFragment = {};
+router.post('/probe', async (req, res) => {
+  await vault(req);
+  let filterFragment;
   try {
-    filterFragment = JSON.parse(req.body.filter || "{}");
-  } catch (e) {
-    return res.render("labs/nosql-expr-injection", { matchResult: { error: "Invalid JSON." }, checkResult: null });
+    filterFragment = JSON.parse(req.body.filter || '{}');
+  } catch {
+    return res.render('labs/nosql-expr-injection', {
+      matchResult: { error: 'Invalid JSON.' },
+      checkResult: null
+    });
   }
-  let matched = false, error = null;
+  if (!filterFragment || typeof filterFragment !== 'object' || Array.isArray(filterFragment)) {
+    return res.render('labs/nosql-expr-injection', {
+      matchResult: { error: 'Filter must be a JSON object.' },
+      checkResult: null
+    });
+  }
+  if (Object.prototype.hasOwnProperty.call(filterFragment, '$where')) {
+    return res.render('labs/nosql-expr-injection', {
+      matchResult: { error: 'This deployment does not permit $where.' },
+      checkResult: null
+    });
+  }
+
+  let matched = false;
+  let error = null;
   try {
-    const doc = await LabRecord.findOne({ labSlug: "nosql-expr-injection", ...filterFragment }).lean();
-    matched = !!doc;
-  } catch (e) {
-    error = e.message;
+    const docs = await LabData.find({
+      ...filterFragment,
+      instanceId: req.lab.instance._id,
+      key: 'vault'
+    }).limit(5).lean();
+    matched = docs.length > 0;
+  } catch (caught) {
+    error = caught.message.slice(0, 200);
   }
-  res.render("labs/nosql-expr-injection", { matchResult: { filter: req.body.filter, matched, error }, checkResult: null });
+
+  return res.render('labs/nosql-expr-injection', {
+    matchResult: { filter: req.body.filter, matched, error },
+    checkResult: null
+  });
 });
 
-router.post("/check", async (req, res) => {
-  await ensureSeed();
-  const answer = (req.body.answer || "").trim();
-  const doc = await LabRecord.findOne({ labSlug: "nosql-expr-injection" }).lean();
-  const correct = doc && answer === doc.data.secret;
-  res.render("labs/nosql-expr-injection", { matchResult: null, checkResult: { correct, flag: correct ? doc.data.secret : null } });
+router.post('/check', async (req, res) => {
+  const record = await vault(req);
+  const answer = String(req.body.answer || '').trim();
+  const correct = answer === record.data.secret;
+  return res.render('labs/nosql-expr-injection', {
+    matchResult: null,
+    checkResult: { correct, flag: correct ? record.data.secret : null }
+  });
 });
 
-router.post("/reset", (req, res) => {
-  req.session.nosqlExpr = null;
-  res.redirect("/labs/nosql-expr-injection");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/nosql-expr-injection');
 });
 
 module.exports = router;

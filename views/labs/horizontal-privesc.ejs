@@ -5,21 +5,22 @@
 <title>TeamNotes — My Notes</title>
 <link rel="stylesheet" href="/css/lab.css">
 </head>
-<body data-theme="privesc">
+<body data-theme="access">
 <div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">TeamNotes</span><span class="tag">/labs/horizontal-privesc</span></div>
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>My Notes</h1>
     <p>Logged in as <strong>alice</strong>.</p>
-    <div style="padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);margin-top:0.5rem;"><%= myNote %></div>
+    <div class="lab-code" style="margin-top:0.5rem;"><%= myNote %></div>
   </div>
 
   <div class="lab-card">
     <h2>View User Notes</h2>
-    <form method="GET" action="/labs/horizontal-privesc/note/">
+    <p class="lab-meta">The note route takes a username from the path and does not verify that it belongs to the session.</p>
+    <form method="GET" onsubmit="this.action='/labs/horizontal-privesc/note/' + encodeURIComponent(document.getElementById('userlookup').value);">
       <label>Username</label>
-      <input id="userlookup" name="u" placeholder="Enter username" value="<%= username %>" autocomplete="off">
-      <button type="submit" onclick="this.form.action='/labs/horizontal-privesc/note/'+document.getElementById('userlookup').value; return true;">Look up</button>
+      <input id="userlookup" name="username" placeholder="Enter username" value="<%= username %>" autocomplete="off">
+      <button type="submit">Look up</button>
     </form>
     <% if (note) { %>
       <div class="lab-alert info" style="margin-top:1rem;">
@@ -29,5 +30,7 @@
     <% if (error) { %><div class="lab-alert error" style="margin-top:1rem;"><%= error %></div><% } %>
   </div>
 
+  <form method="POST" action="/labs/horizontal-privesc/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

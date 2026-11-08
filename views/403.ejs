@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<section class="container-narrow" style="padding:6rem 1.5rem; text-align:center;">
+  <div class="hero-eyebrow">Access control</div>
+  <h1 style="font-size:3rem;margin:0.3rem 0;">403</h1>
+  <p class="muted-note"><%= typeof message !== 'undefined' && message ? message : 'You are not authorised to perform that action.' %></p>
+  <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.2rem;">
+    <a href="/dashboard" class="btn btn-primary">Dashboard</a>
+    <a href="/challenges" class="btn btn-ghost">Lab explorer</a>
+  </div>
+</section>
+<%- include('partials/footer') %>
+</body>
+</html>

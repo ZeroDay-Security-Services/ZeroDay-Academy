@@ -3,53 +3,155 @@
 <head><%- include('partials/head') %></head>
 <body>
 <%- include('partials/nav') %>
-<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
+<%
+  const maxActivity = Math.max(1, ...activity.map(day => day.count));
+  const currentLevelInfo = levelProgress.find(item => item.level === currentLevel) || levelProgress[0];
+%>
+<section class="container" style="padding-top:2.5rem; padding-bottom:5rem;">
   <div class="section-head">
     <div>
-      <div class="hero-eyebrow">Dashboard</div>
-      <h2 style="margin-bottom:0;">Welcome back, <%= currentUser.username %></h2>
+      <div class="hero-eyebrow">Mission control</div>
+      <h2 style="margin-bottom:0.2rem;">Welcome back, <%= currentUser.username %></h2>
+      <p class="muted-note" style="margin:0;">Level <%= currentLevel %> · <%= completed %> of <%= totalChallenges %> labs complete (<%= percent %>%)</p>
     </div>
-    <a href="/challenges" class="btn btn-primary">Browse challenges</a>
+    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+      <a href="/challenges" class="btn btn-primary">Lab explorer</a>
+      <a href="/leaderboard" class="btn btn-ghost">Leaderboard</a>
+    </div>
   </div>
 
-  <div class="stat-grid" style="margin-top:1.5rem;">
+  <div class="stat-grid" style="margin-top:1.25rem;">
     <div class="glass stat"><div class="num"><%= currentUser.points %></div><div class="label">Total points</div></div>
-    <div class="glass stat"><div class="num">#<%= rank %></div><div class="label">Leaderboard rank</div></div>
-    <div class="glass stat"><div class="num"><%= solves.length %> / <%= totalChallenges %></div><div class="label">Labs solved</div></div>
+    <div class="glass stat"><div class="num">#<%= rank %></div><div class="label">Global rank</div></div>
+    <div class="glass stat"><div class="num"><%= completed %>/<%= totalChallenges %></div><div class="label">Labs solved</div></div>
+    <div class="glass stat"><div class="num"><%= daily %></div><div class="label">Solved today</div></div>
+    <div class="glass stat"><div class="num"><%= weekly %></div><div class="label">Solved this week</div></div>
   </div>
 
-  <div class="divider"></div>
-
-  <h3>Category progress</h3>
-  <div class="challenge-grid">
-    <% categoryProgress.forEach(cp => { %>
-      <div class="glass panel-tight">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.86rem;">
-          <span><%= cp.category %></span>
-          <span class="mono" style="color:var(--cyan);"><%= cp.solved %>/<%= cp.total %></span>
-        </div>
-        <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= Math.round((cp.solved/cp.total)*100) %>%;"></div></div>
+  <div class="dashboard-grid">
+    <div class="glass panel">
+      <div class="section-head" style="margin-bottom:0.5rem;">
+        <h3>Progression by level</h3>
+        <span class="badge level-<%= currentLevel %>">Current L<%= currentLevel %></span>
       </div>
-    <% }) %>
+      <div class="level-progress-list">
+        <% levelProgress.forEach(level => { %>
+          <div class="level-progress-row">
+            <span class="level-tag level-<%= level.level %>">L<%= level.level %></span>
+            <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= level.total ? Math.round((level.solved / level.total) * 100) : 0 %>%;"></div></div>
+            <span class="mono muted-note"><%= level.solved %>/<%= level.total %></span>
+          </div>
+        <% }) %>
+      </div>
+      <% if (currentLevelInfo) { %>
+        <p class="muted-note" style="margin:0.9rem 0 0; font-size:0.82rem;">L<%= currentLevelInfo.level %> has <%= currentLevelInfo.total - currentLevelInfo.solved %> labs remaining · <%= currentLevelInfo.points %> points available.</p>
+      <% } %>
+    </div>
+
+    <div class="glass panel">
+      <h3>14-day activity</h3>
+      <div class="activity-chart" aria-label="Solves in the last 14 days">
+        <% activity.forEach(day => { %>
+          <div class="activity-day" title="<%= day.date %>: <%= day.count %> solve(s)">
+            <div class="activity-bar" style="height:<%= Math.max(4, Math.round((day.count / maxActivity) * 100)) %>%;"></div>
+            <span><%= day.date.slice(8) %></span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid" style="grid-template-columns: 1.2fr 0.8fr;">
+    <div class="glass panel">
+      <div class="section-head" style="margin-bottom:0.5rem;">
+        <h3>Active lab instances</h3>
+        <span class="muted-note"><%= activeInstances.length %> running</span>
+      </div>
+      <% if (activeInstances.length === 0) { %>
+        <div class="empty-state">No live instances. Start a lab from the explorer.</div>
+      <% } else { %>
+        <div class="instance-list">
+          <% activeInstances.forEach(instance => { %>
+            <div class="instance-row">
+              <div>
+                <a href="<%= instance.challengeId.labPath %>"><strong><%= instance.challengeId.title %></strong></a>
+                <div class="muted-note" style="font-size:0.78rem;">L<%= instance.challengeId.level %> · instance <%= instance._id.toString().slice(-6) %> · expires <%= new Date(instance.expiresAt).toLocaleTimeString() %></div>
+              </div>
+              <a href="<%= instance.challengeId.labPath %>" class="btn btn-ghost btn-sm">Open</a>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="glass panel">
+      <h3>Domain coverage</h3>
+      <div class="mini-progress-list">
+        <% domainProgress.forEach(domain => { %>
+          <div class="mini-progress-row">
+            <div class="mini-progress-label"><span><%= domain.domain %></span><span class="mono"><%= domain.solved %>/<%= domain.total %></span></div>
+            <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= domain.total ? Math.round((domain.solved / domain.total) * 100) : 0 %>%;"></div></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="glass panel">
+      <h3>Achievements</h3>
+      <div class="achievement-grid">
+        <% accomplishments.forEach(item => { %>
+          <div class="achievement <%= item.earned ? 'earned' : '' %>">
+            <span class="achievement-mark"><%= item.earned ? '✓' : '○' %></span>
+            <div>
+              <strong><%= item.name %></strong>
+              <div class="muted-note" style="font-size:0.78rem;"><%= item.description %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Recommended next</h3>
+      <% if (recommendations.length === 0) { %>
+        <div class="empty-state">You have cleared every available lab. Outstanding.</div>
+      <% } else { %>
+        <div class="recommendation-list">
+          <% recommendations.forEach(lab => { %>
+            <a href="/challenges/<%= lab.slug %>" class="recommendation-row">
+              <span class="level-tag level-<%= lab.level %>">L<%= lab.level %></span>
+              <span style="flex:1;"><strong><%= lab.title %></strong><span class="muted-note" style="display:block;font-size:0.76rem;"><%= lab.domain %></span></span>
+              <span class="mono" style="color:var(--amber);">+<%= lab.points %></span>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
   </div>
 
   <div class="divider"></div>
 
-  <h3>Recent solves</h3>
+  <div class="section-head" style="margin-bottom:0.25rem;">
+    <h3>Recent solves</h3>
+    <a href="/profile" class="muted-note">View full history →</a>
+  </div>
   <% if (solves.length === 0) { %>
-    <div class="glass empty-state">No flags captured yet. <a href="/challenges">Start your first lab →</a></div>
+    <div class="glass empty-state">No flags captured yet. <a href="/challenges">Start with L1 →</a></div>
   <% } else { %>
     <div class="glass" style="padding:0;">
       <div class="table-scroll">
       <table>
-        <thead><tr><th>Challenge</th><th>Category</th><th>Points</th><th>Solved</th></tr></thead>
+        <thead><tr><th>Lab</th><th>Level</th><th>Domain</th><th>Points</th><th>Captured</th></tr></thead>
         <tbody>
-          <% solves.forEach(s => { %>
+          <% solves.slice(0, 10).forEach(solve => { %>
             <tr>
-              <td><%= s.title %></td>
-              <td class="muted-note"><%= s.category %></td>
-              <td class="mono" style="color:var(--amber);">+<%= s.points %></td>
-              <td class="muted-note"><%= new Date(s.solvedAt).toLocaleString() %></td>
+              <td><a href="/challenges/<%= solve.challengeId.slug %>"><%= solve.challengeId.title %></a></td>
+              <td><span class="level-tag level-<%= solve.challengeId.level %>">L<%= solve.challengeId.level %></span></td>
+              <td class="muted-note"><%= solve.challengeId.domain %></td>
+              <td class="mono" style="color:var(--amber);">+<%= solve.pointsAwarded || solve.challengeId.points %></td>
+              <td class="muted-note"><%= new Date(solve.solvedAt).toLocaleString() %></td>
             </tr>
           <% }) %>
         </tbody>

@@ -3,55 +3,92 @@
 <head><%- include('partials/head') %></head>
 <body>
 <%- include('partials/nav') %>
-<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
-  <div class="hero-eyebrow">Profile</div>
-  <div style="display:flex; align-items:center; gap:1rem;">
-    <div class="avatar-circle"><%= currentUser.username.charAt(0).toUpperCase() %></div>
-    <h2 style="margin:0;"><%= currentUser.username %></h2>
+<section class="container" style="padding-top:2.5rem; padding-bottom:5rem;">
+  <div class="section-head">
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <div class="avatar-circle"><%= currentUser.username.charAt(0).toUpperCase() %></div>
+      <div>
+        <div class="hero-eyebrow">Operator profile</div>
+        <h2 style="margin:0;"><%= currentUser.username %></h2>
+        <p class="muted-note" style="margin:0.1rem 0 0; font-size:0.85rem;">Member since <%= new Date(currentUser.createdAt).toLocaleDateString() %> · <span class="mono"><%= currentUser.email %></span></p>
+      </div>
+    </div>
+    <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
   </div>
 
-  <div class="lab-shell" style="margin-top:1.5rem;">
+  <div class="stat-grid" style="margin-top:1.25rem;">
+    <div class="glass stat"><div class="num"><%= currentUser.points %></div><div class="label">Total points</div></div>
+    <div class="glass stat"><div class="num"><%= solves.length %></div><div class="label">Flags captured</div></div>
+    <div class="glass stat"><div class="num">#<%= rank %></div><div class="label">Leaderboard rank</div></div>
+    <div class="glass stat"><div class="num">L<%= currentLevel %></div><div class="label">Current level</div></div>
+  </div>
+
+  <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
     <div class="glass panel">
-      <h3>Account</h3>
-      <p class="muted-note" style="font-size:0.85rem;">Member since <%= new Date(currentUser.createdAt).toLocaleDateString() %></p>
-      <p class="muted-note" style="font-size:0.85rem;"><%= currentUser.email %></p>
-      <div class="divider"></div>
+      <h3>Profile</h3>
       <% if (success) { %><div class="form-success"><%= success %></div><% } %>
       <% if (error) { %><div class="form-error"><%= error %></div><% } %>
       <form method="POST" action="/profile">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="field">
           <label for="bio">Bio</label>
-          <textarea id="bio" name="bio" maxlength="280" placeholder="Tell other hackers about yourself..."><%= currentUser.bio %></textarea>
+          <textarea id="bio" name="bio" maxlength="280" placeholder="What are you working on?"><%= currentUser.bio %></textarea>
+        </div>
+        <div class="field" style="display:flex; align-items:center; gap:0.6rem;">
+          <input type="checkbox" id="emailHints" name="emailHints" style="width:auto;" <%= currentUser.preferences && currentUser.preferences.emailHints ? 'checked' : '' %>>
+          <label for="emailHints" style="margin:0;">Email me about new hints and labs</label>
         </div>
         <button type="submit" class="btn btn-primary">Save profile</button>
       </form>
     </div>
 
-    <div>
-      <div class="stat-grid" style="margin-top:0;">
-        <div class="glass stat"><div class="num"><%= currentUser.points %></div><div class="label">Total points</div></div>
-        <div class="glass stat"><div class="num"><%= solves.length %></div><div class="label">Flags captured</div></div>
-      </div>
+    <div class="glass panel">
+      <h3>Change password</h3>
+      <% if (passwordSuccess) { %><div class="form-success"><%= passwordSuccess %></div><% } %>
+      <% if (passwordError) { %><div class="form-error"><%= passwordError %></div><% } %>
+      <form method="POST" action="/profile/password">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="field"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" name="currentPassword" required autocomplete="current-password"></div>
+        <div class="field"><label for="newPassword">New password</label><input id="newPassword" type="password" name="newPassword" required minlength="10" autocomplete="new-password"></div>
+        <div class="field"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" name="confirmPassword" required minlength="10" autocomplete="new-password"></div>
+        <button type="submit" class="btn btn-ghost">Update password</button>
+      </form>
+    </div>
+  </div>
 
-      <div class="glass" style="margin-top:1.5rem; padding:0;">
+  <div class="dashboard-grid" style="grid-template-columns: 1.2fr 0.8fr;">
+    <div class="glass panel">
+      <h3>Captured flags</h3>
+      <% if (solves.length === 0) { %>
+        <div class="empty-state">No flags captured yet. <a href="/challenges">Open the lab explorer →</a></div>
+      <% } else { %>
         <div class="table-scroll">
-        <table>
-          <thead><tr><th>Challenge</th><th>Category</th><th>Difficulty</th><th>Points</th></tr></thead>
-          <tbody>
-            <% solves.forEach(s => { %>
-              <tr>
-                <td><%= s.title %></td>
-                <td class="muted-note"><%= s.category %></td>
-                <td><span class="badge badge-<%= s.difficulty.toLowerCase() %>"><%= s.difficulty %></span></td>
-                <td class="mono" style="color:var(--amber);">+<%= s.points %></td>
-              </tr>
-            <% }) %>
-            <% if (solves.length === 0) { %>
-              <tr><td colspan="4" class="empty-state">No solves yet.</td></tr>
-            <% } %>
-          </tbody>
-        </table>
+          <table>
+            <thead><tr><th>Lab</th><th>Level</th><th>Points</th><th>Date</th></tr></thead>
+            <tbody>
+              <% solves.forEach(solve => { %>
+                <tr>
+                  <td><a href="/challenges/<%= solve.challengeId.slug %>"><%= solve.challengeId.title %></a></td>
+                  <td><span class="level-tag level-<%= solve.challengeId.level %>">L<%= solve.challengeId.level %></span></td>
+                  <td class="mono" style="color:var(--amber);">+<%= solve.pointsAwarded || solve.challengeId.points %></td>
+                  <td class="muted-note"><%= new Date(solve.solvedAt).toLocaleDateString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
         </div>
+      <% } %>
+    </div>
+
+    <div class="glass panel">
+      <h3>Achievements</h3>
+      <div class="achievement-grid single-column">
+        <% accomplishments.forEach(item => { %>
+          <div class="achievement <%= item.earned ? 'earned' : '' %>">
+            <span class="achievement-mark"><%= item.earned ? '✓' : '○' %></span>
+            <div><strong><%= item.name %></strong><div class="muted-note" style="font-size:0.78rem;"><%= item.description %></div></div>
+          </div>
+        <% }) %>
       </div>
     </div>
   </div>

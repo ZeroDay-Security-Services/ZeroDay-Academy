@@ -21,12 +21,16 @@
         <button type="submit">Continue</button>
       </form>
       <% if (result && result.error) { %><div class="lab-alert error"><%= result.error %></div><% } %>
+      <p class="lab-meta">Training credentials: <code>admin</code> / <code>adminpass</code>.</p>
     <% } else { %>
       <div class="lab-alert success" style="margin-bottom:1rem;">Step 1 complete. Enter your OTP.</div>
       <h2>Step 2: OTP Verification</h2>
       <form method="POST" action="/labs/two-factor-bypass/step2">
         <label>One-time code</label>
         <input name="otp" maxlength="6" placeholder="6-digit code" autocomplete="off">
+        <label style="display:flex;gap:0.5rem;align-items:center;margin-top:0.6rem;">
+          <input type="checkbox" name="debugSkip" value="true"> Send the legacy <code>debugSkip</code> parameter
+        </label>
         <button type="submit">Verify</button>
       </form>
       <% if (result && result.success === false) { %>
@@ -42,6 +46,6 @@
   </div>
 
   <form method="POST" action="/labs/two-factor-bypass/reset"><button type="submit" class="secondary">Reset lab</button></form>
-
+</div>
 </body>
 </html>

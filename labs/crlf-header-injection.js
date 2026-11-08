@@ -1,35 +1,45 @@
-const express = require("express");
+'use strict';
+
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.render("labs/crlf-header-injection");
+router.get('/', (req, res) => {
+  const exploited = req.lab.state.crlfExploited === true;
+  res.render('labs/crlf-header-injection', {
+    exploited,
+    flag: exploited ? req.lab.flag() : null
+  });
 });
 
-router.get("/go", (req, res) => {
-  const dest = req.query.dest || "/";
+// The redirect destination is concatenated into a raw HTTP response. A CRLF
+// sequence lets the caller add arbitrary response headers or a second body.
+router.get('/go', async (req, res) => {
+  const dest = String(req.query.dest || '/').slice(0, 800);
   if (/[\r\n]/.test(dest)) {
-    req.session.crlfLab = { exploited: true };
+    req.lab.state.crlfExploited = true;
+    await req.lab.save();
   }
-  res.statusCode = 302;
-  res.setHeader("X-Redirect-Reason", "user-requested");
+
   try {
     res.socket.write(
-      "HTTP/1.1 302 Found\r\nLocation: " + dest + "\r\nX-Powered-By: crlf-lab\r\n\r\n"
+      `HTTP/1.1 302 Found\r\nLocation: ${dest}\r\nX-Powered-By: crlf-lab\r\nContent-Length: 0\r\n\r\n`
     );
     res.socket.end();
-  } catch (e) {
-    res.status(500).send("error: " + e.message);
+  } catch (error) {
+    res.status(500).type('text').send('Redirect failed.');
   }
 });
 
-router.get("/flag", (req, res) => {
-  const exploited = req.session.crlfLab && req.session.crlfLab.exploited;
-  res.json({ flag: exploited ? "ZDS{crlf_1nj3ct10n_smuggl3s_h34d3rs}" : null, exploited: !!exploited });
+router.get('/status', (req, res) => {
+  const exploited = req.lab.state.crlfExploited === true;
+  res.json({ ok: true, exploited, flag: exploited ? req.lab.flag() : null });
 });
 
-router.post("/reset", (req, res) => {
-  req.session.crlfLab = null;
-  res.redirect("/labs/crlf-header-injection");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/crlf-header-injection');
 });
 
 module.exports = router;

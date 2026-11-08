@@ -1,82 +1,98 @@
+'use strict';
 
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-const labDir = path.join(__dirname, "..", "db", "xxe-oob-fs");
-if (!fs.existsSync(labDir)) fs.mkdirSync(labDir, { recursive: true });
-const secretPath = path.join(labDir, "db_credentials.conf");
-if (!fs.existsSync(secretPath)) fs.writeFileSync(secretPath, "ZDS{00b_xxe_3xf1ltr4t3s_v14_dtd_f3tch}\n");
-
-function getState(req) {
-  if (!req.session.xxeOob) {
-    req.session.xxeOob = { dtd: "", received: null };
+function state(req) {
+  if (!req.lab.state.xxeOob) {
+    req.lab.state.xxeOob = {
+      dtd: '',
+      received: null,
+      files: { 'db_credentials.conf': `${req.lab.flag()}\n` }
+    };
   }
-  return req.session.xxeOob;
+  return req.lab.state.xxeOob;
 }
 
-router.get("/", (req, res) => {
-  const state = getState(req);
-  res.render("labs/xxe-oob-exfil", { dtd: state.dtd, received: state.received, result: null });
+function render(res, req, result = null) {
+  const current = state(req);
+  return res.render('labs/xxe-oob-exfil', {
+    dtd: current.dtd,
+    received: current.received,
+    result
+  });
+}
+
+router.get('/', (req, res) => {
+  state(req);
+  render(res, req);
 });
 
-router.post("/craft-dtd", (req, res) => {
-  const state = getState(req);
-  state.dtd = req.body.dtd || state.dtd;
-  res.render("labs/xxe-oob-exfil", { dtd: state.dtd, received: state.received, result: null });
+router.post('/craft-dtd', async (req, res) => {
+  const current = state(req);
+  current.dtd = String(req.body.dtd || '').slice(0, 8000);
+  await req.lab.save();
+  render(res, req);
 });
 
-router.get("/evil.dtd", (req, res) => {
-  const state = getState(req);
-  res.set("Content-Type", "application/xml-dtd");
-  res.send(state.dtd);
+router.get('/evil.dtd', (req, res) => {
+  res.set('Content-Type', 'application/xml-dtd');
+  res.send(state(req).dtd);
 });
 
-router.post("/import", async (req, res) => {
-  const xml = req.body.xml || "";
-  const state = getState(req);
-  const sysMatch = xml.match(/SYSTEM\s+"([^"]+)"/);
+// The importer follows the external DTD and then follows the exfiltration URL
+// declared inside it. Network access is simulated inside the instance.
+router.post('/import', async (req, res) => {
+  const xml = String(req.body.xml || '').slice(0, 12000);
+  const current = state(req);
   let result = null;
-  if (sysMatch) {
-    try {
-      const dtdUrl = sysMatch[1];
-      const r = await fetch(dtdUrl, { signal: AbortSignal.timeout(5000) });
-      const dtdText = await r.text();
-      const fileMatch = dtdText.match(/SYSTEM\s+"([^"]*FILE:([\w.-]+)[^"]*)"/);
-      if (fileMatch) {
-        const [, urlTemplate, fileName] = fileMatch;
-        const content = fs.readFileSync(path.join(labDir, fileName), "utf8").trim();
-        const finalUrl = urlTemplate.replace("FILE:" + fileName, encodeURIComponent(content));
-        const collectRes = await fetch(finalUrl, { signal: AbortSignal.timeout(5000) });
-        result = { status: collectRes.status, message: "External DTD processed." };
-      } else {
-        result = { message: "DTD fetched but could not be expanded." };
-      }
-    } catch (e) {
-      result = { error: e.message };
-    }
-  } else {
-    result = { error: "Could not process the submitted XML." };
+
+  const remote = xml.match(/SYSTEM\s+["']([^"']*evil\.dtd)["']/i);
+  if (!remote) {
+    return render(res, req, { error: 'The external DTD was not referenced by the submitted XML.' });
   }
-  res.render("labs/xxe-oob-exfil", { dtd: state.dtd, received: state.received, result });
+
+  const dtd = current.dtd;
+  const fileEntity = dtd.match(/<!ENTITY\s+%\s+\w+\s+SYSTEM\s+["']file:\/\/([^"']+)["']/i);
+  const exfilEntity = dtd.match(/<!ENTITY\s+%\s+\w+\s+SYSTEM\s+["']([^"']*\/collector\?data=[^"']*)["']/i);
+
+  if (!fileEntity || !exfilEntity) {
+    return render(res, req, { error: 'The DTD must define a file entity and a collector entity.' });
+  }
+
+  const fileName = fileEntity[1].split('/').pop();
+  if (!Object.prototype.hasOwnProperty.call(current.files, fileName)) {
+    return render(res, req, { error: `The target file was not found: ${fileName}` });
+  }
+
+  const content = current.files[fileName].trim();
+  current.received = content;
+  await req.lab.save();
+  return render(res, req, {
+    message: `External DTD processed. Collector received ${content.length} bytes from ${fileName}.`
+  });
 });
 
-router.get("/collector", (req, res) => {
-  const state = getState(req);
-  state.received = req.query.data || null;
+router.get('/collector', async (req, res) => {
+  const current = state(req);
+  current.received = String(req.query.data || '').slice(0, 5000);
+  await req.lab.save();
   res.json({ ok: true });
 });
 
-router.get("/check", (req, res) => {
-  const state = getState(req);
-  const flag = state.received && state.received.includes("ZDS{") ? state.received.match(/ZDS\{[^}]*\}/)[0] : null;
-  res.json({ received: state.received, flag });
+router.get('/check', (req, res) => {
+  const current = state(req);
+  const flag = current.received && /ZDS\{[^}]+\}/.test(current.received)
+    ? current.received.match(/ZDS\{[^}]+\}/)[0]
+    : null;
+  res.json({ received: current.received, flag });
 });
 
-router.post("/reset", (req, res) => {
-  req.session.xxeOob = null;
-  res.redirect("/labs/xxe-oob-exfil");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/xxe-oob-exfil');
 });
 
 module.exports = router;

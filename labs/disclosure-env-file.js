@@ -1,16 +1,31 @@
-const express = require("express");
-const path = require("path");
+'use strict';
+
+const express = require('express');
+
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.render("labs/disclosure-env-file");
+router.get('/', (req, res) => {
+  res.render('labs/disclosure-env-file');
 });
 
-router.use(express.static(path.join(__dirname, "static", "disclosure"), { dotfiles: "allow" }));
+// Dotfiles are served because the deployment copied the project root into the
+// static web root. There is no link to this path anywhere in the UI.
+router.get('/.env', (req, res) => {
+  res.type('text/plain');
+  res.send(`NODE_ENV=production
+APP_NAME=CorpDash
+DATABASE_URL=postgres://corpdash:${req.lab.proof('db-password').slice(0, 18)}@db.internal:5432/corpdash
+REDIS_URL=redis://cache.internal:6379
+FLAG=${req.lab.flag()}
+`);
+});
 
-router.post("/reset", (req, res) => {
+router.get('/env', (req, res) => {
+  res.redirect('/labs/disclosure-env-file/.env');
+});
 
-  res.redirect("/labs/disclosure-env-file");
+router.post('/reset', (req, res) => {
+  res.redirect('/labs/disclosure-env-file');
 });
 
 module.exports = router;

@@ -5,7 +5,7 @@
 <title>CorpPortal — Dashboard</title>
 <link rel="stylesheet" href="/css/lab.css">
 </head>
-<body data-theme="privesc">
+<body data-theme="access">
 <div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">CorpPortal</span><span class="tag">/labs/vertical-privesc</span></div>
 <div class="lab-wrap">
   <div class="lab-card">
@@ -20,17 +20,21 @@
 
   <div class="lab-card">
     <h2>Admin Functions</h2>
+    <p class="lab-meta">The UI hides this panel from normal users, but the endpoint does not verify the caller's role.</p>
     <% if (flag) { %>
       <div class="lab-alert success">
         Admin action executed successfully.
         <br>Flag: <span class="lab-flag"><%= flag %></span>
       </div>
     <% } else { %>
-      <div class="lab-alert info" style="opacity:0.6;">
-        <span style="font-size:1.2rem;">🔒</span> These functions are restricted to administrators.
-      </div>
+      <div class="lab-alert info">The <code>POST /admin/grant-flag</code> endpoint is intended for administrators only.</div>
+      <form method="POST" action="/labs/vertical-privesc/admin/grant-flag">
+        <button type="submit" class="danger">Invoke admin action</button>
+      </form>
     <% } %>
   </div>
 
+  <form method="POST" action="/labs/vertical-privesc/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

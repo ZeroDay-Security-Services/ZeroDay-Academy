@@ -3,217 +3,223 @@
 <head><%- include('partials/head') %></head>
 <body>
 <%- include('partials/nav') %>
-<%
-  let estTime = "~30 mins";
-  if (challenge.difficulty === "Trivial") estTime = "~10 mins";
-  else if (challenge.difficulty === "Easy") estTime = "~20 mins";
-  else if (challenge.difficulty === "Medium") estTime = "~45 mins";
-  else if (challenge.difficulty === "Hard") estTime = "~1.5 hours";
-  else if (challenge.difficulty === "Insane") estTime = "2+ hours";
-%>
-<section class="premium-container" style="padding-top: 1.5rem; padding-bottom: 1.5rem;">
-  <a href="/challenges" class="muted-note" style="display:inline-flex; align-items:center; gap:6px; margin-bottom: 1rem; font-weight:500; transition:color 200ms ease;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-    All challenges
-  </a>
+<section class="container" style="padding-top:2rem; padding-bottom:5rem;">
+  <a href="/challenges" class="muted-note" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:1rem;">← Back to lab explorer</a>
 
-  <div class="premium-grid">
-    <!-- LEFT PANEL: Overview -->
-    <aside class="glass-strong premium-panel" style="border-radius: var(--radius); display:flex; flex-direction:column; gap:16px;">
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+  <% if (notice === 'stopped') { %>
+    <div class="form-success">Lab instance stopped. Start it again when you are ready.</div>
+  <% } %>
+
+  <div class="lab-workspace">
+    <aside class="glass-strong panel lab-brief">
+      <div class="badge-row">
+        <span class="level-tag level-<%= challenge.level %>">L<%= challenge.level %></span>
         <span class="badge badge-<%= challenge.difficulty.toLowerCase() %>"><%= challenge.difficulty %></span>
-        <span class="badge badge-owasp"><%= challenge.category %></span>
         <span class="badge badge-domain"><%= challenge.domain %></span>
-        <span id="solvedBadge" class="badge badge-solved" style="<%= solved ? '' : 'display:none;' %>">✓ Solved</span>
+        <% if (solved) { %><span class="badge badge-solved">✓ Solved</span><% } %>
+        <% if (locked) { %><span class="badge badge-locked">Locked</span><% } %>
       </div>
 
-      <div>
-        <h2 style="font-size: clamp(1.4rem, 2.5vw, 1.8rem); margin:0; line-height: 1.2;"><%= challenge.title %></h2>
-        <p class="muted-note mono" style="font-size:0.8rem; margin-top:0.4rem; letter-spacing: 0.02em;"><%= challenge.owaspRef %></p>
-      </div>
+      <h1 style="font-size:clamp(1.45rem,3vw,2.1rem); margin-top:0.7rem;"><%= challenge.title %></h1>
+      <p class="mono muted-note" style="font-size:0.76rem;"><%= challenge.owaspRef %><% if (challenge.owaspApiRef) { %> · <%= challenge.owaspApiRef %><% } %></p>
 
-      <div class="divider" style="margin: 0;"></div>
+      <div class="divider"></div>
 
-      <div>
-        <h3 style="color:var(--text-dim); text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; margin-bottom: 0.6rem;">Description</h3>
-        <p style="max-width: 65ch; line-height:1.6; color:var(--text-primary); font-size: 0.95rem;"><%= challenge.briefing %></p>
-      </div>
-
-      <% if (challenge.hint) { %>
-      <details class="hint-accordion glass" style="padding: 12px 16px; border-radius: var(--radius-sm);">
-        <summary style="cursor: pointer; color: var(--cyan); font-weight: 500; user-select: none; display:flex; align-items:center; gap:8px; font-size: 0.9rem;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-          Need a Hint? 
-          <span style="font-size: 0.8rem; opacity: 0.7; margin-left:auto;">▼</span>
-        </summary>
-        <p class="muted-note" style="margin-top: 0.8rem; line-height: 1.5; border-top: 1px solid var(--glass-border); padding-top:0.8rem; font-size: 0.9rem;"><%- challenge.hint %></p>
-      </details>
+      <p style="color:var(--text-primary); line-height:1.65;"><%= challenge.briefing %></p>
+      <% if (challenge.scenario) { %>
+        <p><strong>Scenario.</strong> <%= challenge.scenario %></p>
       <% } %>
 
-      <div class="divider" style="margin: 0;"></div>
+      <h3 class="minor-heading">Objectives</h3>
+      <ul class="objective-list">
+        <% (challenge.objectives || []).forEach(objective => { %><li><%= objective %></li><% }) %>
+      </ul>
 
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <span class="muted-note" style="text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; font-weight:600;">Reward</span>
-          <span class="pts mono" style="font-size:1.4rem; color:var(--amber); font-weight:700;">+<%= challenge.points %> pts</span>
+      <% if (challenge.prerequisites && challenge.prerequisites.length) { %>
+        <h3 class="minor-heading">Prerequisites</h3>
+        <div class="prereq-list">
+          <% challenge.prerequisites.forEach(slug => { %>
+            <a class="badge <%= missingPrerequisites.includes(slug) ? 'badge-locked' : 'badge-solved' %>" href="/challenges/<%= slug %>">
+              <%= missingPrerequisites.includes(slug) ? 'Locked' : 'Done' %> · <%= slug %>
+            </a>
+          <% }) %>
         </div>
-        <div style="display:flex; flex-direction:column; gap:4px; text-align:right;">
-          <span class="muted-note" style="text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em; font-weight:600;">Estimated Time</span>
-          <span style="font-size:1.1rem; color:var(--text-primary); font-weight:500;"><%= estTime %></span>
-        </div>
+      <% } %>
+
+      <h3 class="minor-heading">Threat mapping</h3>
+      <div class="mapping-grid">
+        <div><span>OWASP</span><strong><%= challenge.owaspRef || '—' %></strong></div>
+        <div><span>ASVS</span><strong><%= challenge.asvsRef || '—' %></strong></div>
+        <div><span>WSTG</span><strong><%= challenge.wstgRef || '—' %></strong></div>
+        <div><span>CWE</span><strong><%= challenge.cwe || '—' %></strong></div>
+        <div><span>ATT&amp;CK</span><strong><%= challenge.attackTechnique || '—' %></strong></div>
+        <div><span>Est. time</span><strong><%= challenge.estimatedMinutes %> min</strong></div>
       </div>
 
-      <div id="flagSection" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
-        <% if (solved) { %>
-          <div class="form-success" id="alreadySolvedMsg" style="margin:0; text-align:center;">Flag captured. Nice work.</div>
-        <% } else { %>
-          <label for="flag" style="display:block; margin-bottom:10px; font-weight:500; font-size:0.85rem;">Submit Flag</label>
-          <div class="flag-box" style="display:flex; gap:8px;">
-            <input id="flag" name="flag" placeholder="ZDS{...}" autocomplete="off" style="flex:1; padding: 0.5rem 0.8rem; font-size: 0.9rem;">
-            <button type="button" id="submitFlagBtn" class="btn btn-primary" style="white-space:nowrap; padding: 0.5rem 1rem;">Submit</button>
-          </div>
-          <div id="flagStatus" class="flag-status" style="margin-top:8px;"></div>
-        <% } %>
+      <h3 class="minor-heading">Hints</h3>
+      <div id="hintList">
+        <% (challenge.hints || []).slice(0, revealedHints).forEach((hint, index) => { %>
+          <div class="hint-card"><span class="badge badge-domain">Hint <%= index + 1 %></span><p><%= hint %></p></div>
+        <% }) %>
+        <% if (revealedHints === 0) { %><p class="muted-note" id="noHints">No hints unlocked. Use the button if you are stuck.</p><% } %>
       </div>
+      <% if (revealedHints < (challenge.hints || []).length) { %>
+        <button type="button" class="btn btn-ghost btn-sm" id="hintBtn" data-slug="<%= challenge.slug %>">Reveal next hint (<%= revealedHints %>/<%= challenge.hints.length %>)</button>
+      <% } else { %>
+        <p class="muted-note" style="font-size:0.8rem;">All hints revealed.</p>
+      <% } %>
     </aside>
 
-    <!-- RIGHT PANEL: Access -->
-    <div style="display:flex; flex-direction:column; gap:24px;">
-      <aside class="glass premium-panel" style="border-radius: var(--radius);">
-        <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom:12px; font-size: 1.1rem;">Challenge Access</h3>
-        
+    <div class="lab-access-column">
+      <aside class="glass panel">
+        <div class="section-head" style="margin-bottom:0.75rem;">
+          <h3 style="margin:0;">Lab instance</h3>
+          <span class="badge <%= activeInstance ? 'badge-solved' : 'badge-domain' %>"><%= activeInstance ? 'Ready' : 'Not started' %></span>
+        </div>
+
         <div class="metadata-grid">
-          <div class="metadata-item">
-            <span class="metadata-label">Status</span>
-            <span class="metadata-value" style="color: var(--emerald); display:flex; align-items:center; gap:6px;">
-              <span style="width:8px; height:8px; background:var(--emerald); border-radius:50%; display:inline-block; box-shadow:0 0 8px var(--emerald);"></span>
-              Ready
-            </span>
-          </div>
-          <div class="metadata-item">
-            <span class="metadata-label">Lab Type</span>
-            <span class="metadata-value"><%= challenge.category %></span>
-          </div>
-          <div class="metadata-item">
-            <span class="metadata-label">Estimated Difficulty</span>
-            <span class="metadata-value"><%= challenge.difficulty %></span>
-          </div>
-          <div class="metadata-item">
-            <span class="metadata-label">Solve Status</span>
-            <span class="metadata-value" id="completionTimeDisplay"><%= solved ? 'Completed' : 'Pending' %></span>
-          </div>
+          <div class="metadata-item"><span class="metadata-label">Target</span><span class="metadata-value mono"><%= challenge.labPath %></span></div>
+          <div class="metadata-item"><span class="metadata-label">Flag binding</span><span class="metadata-value">User + lab + instance</span></div>
+          <div class="metadata-item"><span class="metadata-label">Instance TTL</span><span class="metadata-value"><%= activeInstance ? new Date(activeInstance.expiresAt).toLocaleString() : 'Created on launch' %></span></div>
+          <div class="metadata-item"><span class="metadata-label">Reward</span><span class="metadata-value mono" style="color:var(--amber);">+<%= challenge.points %> pts</span></div>
         </div>
 
-        <div class="premium-section-spacing" style="margin-top: 24px;">
-          <span class="metadata-label" style="display:block; margin-bottom:8px;">Live Target URL</span>
-          <div class="premium-code-block"><%= challenge.labPath %></div>
-        </div>
+        <% if (locked) { %>
+          <div class="form-error" style="margin-top:1rem;">Complete <strong><%= missingPrerequisites.join(', ') %></strong> before launching this lab.</div>
+          <button class="btn btn-primary btn-block" disabled>Prerequisites required</button>
+        <% } else { %>
+          <form method="POST" action="/challenges/<%= challenge.slug %>/start" style="margin-top:1rem;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-primary btn-block"><%= activeInstance ? 'Open lab target' : 'Start lab instance' %></button>
+          </form>
+          <% if (activeInstance) { %>
+            <div class="instance-actions">
+              <a class="btn btn-ghost btn-sm" href="<%= challenge.labPath %>" target="_blank" rel="noopener">Open in new tab</a>
+              <form method="POST" action="/challenges/<%= challenge.slug %>/reset">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-danger btn-sm">Reset instance</button>
+              </form>
+              <form method="POST" action="/challenges/<%= challenge.slug %>/stop">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-ghost btn-sm">Stop</button>
+              </form>
+            </div>
+            <p class="muted-note" style="font-size:0.76rem; margin-top:0.6rem;">Resetting rotates the instance key and invalidates every previously observed flag.</p>
+          <% } %>
+        <% } %>
+      </aside>
 
-        <a href="<%= challenge.labPath %>" id="launchChallengeBtn" target="_blank" rel="noopener" class="btn-premium" style="display: inline-flex; justify-content:center; padding:0.85rem 1.5rem; font-size:1rem; background: var(--cyan); color: #000; border-color: transparent; margin-top: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-          Launch Challenge
-        </a>
+      <aside class="glass panel">
+        <h3>Submit flag</h3>
+        <% if (solved) { %>
+          <div class="form-success" style="margin:0;">Flag accepted. This lab is complete.</div>
+          <% if (solution) { %>
+            <details class="solution-box" open>
+              <summary>Post-completion writeup</summary>
+              <p><%= solution %></p>
+            </details>
+          <% } %>
+        <% } else { %>
+          <p class="muted-note" style="font-size:0.86rem;">Submit the flag extracted from the target. Validation happens server-side against your active instance.</p>
+          <div class="flag-box">
+            <input id="flag" name="flag" placeholder="ZDS{...}" autocomplete="off">
+            <button type="button" id="submitFlagBtn" class="btn btn-primary">Submit</button>
+          </div>
+          <div id="flagStatus" class="flag-status"></div>
+        <% } %>
       </aside>
     </div>
   </div>
-
-  <!-- BOTTOM NAV: Controls -->
-  <div class="premium-bottom-nav">
-    <button id="labPrevBtn" class="btn-premium" disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      Previous Challenge
-    </button>
-    
-    <!-- Restart button removed by request -->
-    
-    <button id="labNextBtn" class="btn-premium" disabled>
-      Next Challenge
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-    </button>
-  </div>
 </section>
 <%- include('partials/footer') %>
-
 <script>
 (function () {
-  const btn = document.getElementById('submitFlagBtn');
-  const input = document.getElementById('flag');
-  const status = document.getElementById('flagStatus');
-  const solvedBadge = document.getElementById("solvedBadge");
-  const compTimeDisplay = document.getElementById("completionTimeDisplay");
-  const challengeSlug = "<%- challenge.slug %>";
+  var csrf = <%- JSON.stringify(csrfToken) %>;
+  var slug = <%- JSON.stringify(challenge.slug) %>;
+  var submitBtn = document.getElementById('submitFlagBtn');
+  var flagInput = document.getElementById('flag');
+  var statusBox = document.getElementById('flagStatus');
 
-  if (btn) {
-    async function submitFlag() {
-      const flag = input.value.trim();
-      if (!flag) { status.innerHTML = '<div class="form-error">Enter a flag first.</div>'; return; }
-      btn.disabled = true;
-      btn.textContent = 'Checking…';
-      try {
-        const res = await fetch('/challenges/' + challengeSlug + '/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'flag=' + encodeURIComponent(flag)
-        });
-        const data = await res.json();
-        if (data.ok) {
-          if (!data.alreadySolved) {
-            status.innerHTML = '<div class="form-success" style="margin-top:12px;">Correct! +' + data.points + ' points.</div>';
-            solvedBadge.style.display = 'inline-flex';
-            document.getElementById('flagSection').innerHTML = '<div class="form-success" style="margin:0; text-align:center;">Flag captured. Nice work.</div>';
-            
-            compTimeDisplay.textContent = "Completed";
-            compTimeDisplay.style.color = "var(--emerald)";
-          } else {
-            status.innerHTML = '<div class="form-success" style="margin-top:12px;">Already solved.</div>';
-          }
-          
-          const chip = document.querySelector('.points-chip');
-          if (chip && data.points) {
-            const current = parseInt((chip.textContent.match(/\d+/) || [0])[0], 10) || 0;
-            chip.textContent = '⚡ ' + (current + data.points) + ' pts';
-          }
-        } else {
-          status.innerHTML = '<div class="form-error" style="margin-top:12px;">' + data.message + '</div>';
-          btn.disabled = false;
-          btn.textContent = 'Submit';
-        }
-      } catch (e) {
-        status.innerHTML = '<div class="form-error" style="margin-top:12px;">Network error, try again.</div>';
-        btn.disabled = false;
-        btn.textContent = 'Submit';
-      }
-    }
-
-    btn.addEventListener('click', submitFlag);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitFlag(); });
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRF-Token': csrf,
+        'Accept': 'application/json'
+      },
+      body: body
+    });
   }
 
-  // Lab Controls Logic
-  var currentPath = <%- JSON.stringify(challenge.labPath) %>;
-  fetch('/api/challenge-order').then(function (r) { return r.json(); }).then(function (list) {
-    var idx = list.findIndex(function (c) { return currentPath === c.labPath; });
-    if (idx === -1) return;
-    var prevBtn = document.getElementById('labPrevBtn');
-    var nextBtn = document.getElementById('labNextBtn');
-    
-    if (idx > 0) {
-      prevBtn.disabled = false;
-      prevBtn.title = list[idx - 1].title;
-      prevBtn.addEventListener('click', function () { window.location.href = '/challenges/' + list[idx - 1].slug; });
-    }
-    
-    if (idx < list.length - 1) {
-      nextBtn.disabled = false;
-      nextBtn.title = list[idx + 1].title;
-      nextBtn.addEventListener('click', function () { window.location.href = '/challenges/' + list[idx + 1].slug; });
-    }
-  }).catch(function () {});
+  if (submitBtn) {
+    var submit = function () {
+      var flag = flagInput.value.trim();
+      if (!flag) { statusBox.innerHTML = '<div class="form-error">Enter a flag first.</div>'; return; }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Checking…';
+      post('/challenges/' + slug + '/submit', 'flag=' + encodeURIComponent(flag))
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            if (data.alreadySolved) {
+              statusBox.innerHTML = '<div class="form-success">Already solved.</div>';
+            } else {
+              statusBox.innerHTML = '<div class="form-success">' + data.message + ' +' + data.points + ' points. Reloading…</div>';
+              setTimeout(function () { location.reload(); }, 800);
+            }
+          } else {
+            statusBox.innerHTML = '<div class="form-error">' + data.message + '</div>';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+          }
+        })
+        .catch(function () {
+          statusBox.innerHTML = '<div class="form-error">Network error. Try again.</div>';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        });
+    };
+    submitBtn.addEventListener('click', submit);
+    flagInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') submit(); });
+  }
 
+  var hintBtn = document.getElementById('hintBtn');
+  if (hintBtn) {
+    hintBtn.addEventListener('click', function () {
+      hintBtn.disabled = true;
+      post('/challenges/' + slug + '/hint', '')
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || 'Could not reveal hint.');
+          var noHints = document.getElementById('noHints');
+          if (noHints) noHints.remove();
+          var card = document.createElement('div');
+          card.className = 'hint-card';
+          var badge = document.createElement('span');
+          badge.className = 'badge badge-domain';
+          badge.textContent = 'Hint ' + data.revealed;
+          var text = document.createElement('p');
+          text.textContent = data.hint;
+          card.appendChild(badge);
+          card.appendChild(text);
+          document.getElementById('hintList').appendChild(card);
+          if (data.revealed >= data.total) {
+            hintBtn.parentNode.replaceChild(Object.assign(document.createElement('p'), {
+              className: 'muted-note', textContent: 'All hints revealed.'
+            }), hintBtn);
+          } else {
+            hintBtn.textContent = 'Reveal next hint (' + data.revealed + '/' + data.total + ')';
+            hintBtn.disabled = false;
+          }
+        })
+        .catch(function (error) {
+          hintBtn.disabled = false;
+          alert(error.message);
+        });
+    });
+  }
 })();
 </script>
-<style>
-@keyframes spin { 100% { transform: rotate(360deg); } }
-</style>
 </body>
 </html>

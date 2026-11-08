@@ -10,7 +10,7 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Account Lookup</h1>
-    <p>Check if an account exists in the system.</p>
+    <p>Check if an account exists. The page returns only a timing measurement.</p>
     <form method="POST" action="/labs/sqli-time-blind/lookup">
       <label>Username</label>
       <input name="username" value="<%= username %>" placeholder="Enter username" autocomplete="off">
@@ -23,19 +23,12 @@
   </div>
 
   <div class="lab-card">
-    <h2>Submit extracted value</h2>
-    <form method="POST" action="/labs/sqli-time-blind/check">
-      <label>Answer</label>
-      <input name="answer" placeholder="Enter the extracted value" autocomplete="off">
-      <button type="submit">Check</button>
-    </form>
-    <% if (checkResult) { %>
-      <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
-        <%= checkResult.correct ? 'Correct!' : 'Incorrect.' %>
-        <% if (checkResult.flag) { %><br>Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } %>
-      </div>
-    <% } %>
+    <h2>Time-based extraction</h2>
+    <p>The username is concatenated into <code>SELECT id FROM sqli_accounts WHERE username = '&lt;input&gt;'</code>. Inject a conditional <code>sleep(ms)</code> call to turn response time into a boolean oracle, extract <code>time-flag</code> from <code>sqli_secrets</code>, and submit it from the challenge page.</p>
+    <pre class="lab-code">admin' AND (SELECT unicode(substr(value,1,1)) FROM sqli_secrets WHERE label='time-flag') &gt; 77 AND sleep(800) --</pre>
   </div>
 
+  <form method="POST" action="/labs/sqli-time-blind/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

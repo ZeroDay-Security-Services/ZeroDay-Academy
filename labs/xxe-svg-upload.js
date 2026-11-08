@@ -1,62 +1,68 @@
+'use strict';
 
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-const labDir = path.join(__dirname, "..", "db", "xxe-svg-fs");
-if (!fs.existsSync(labDir)) fs.mkdirSync(labDir, { recursive: true });
-const secretPath = path.join(labDir, ".htpasswd");
-if (!fs.existsSync(secretPath)) fs.writeFileSync(secretPath, "ZDS{xxe_v14_svg_upl04d_r34ds_l0c4l_f1l3s}\n");
-
-function resolveSystemPath(uri) {
-  if (uri.startsWith("file://")) return uri.replace("file://", "");
-  return path.join(labDir, uri);
+function virtualFiles(req) {
+  return {
+    'flag.txt': `${req.lab.flag()}\n`,
+    '.htpasswd': `admin:${req.lab.flag()}\n`,
+    'README.txt': 'SVG preview sandbox.\n'
+  };
 }
 
-function vulnerableParse(xml) {
-  const entityDefs = {};
-  const entityRegex = /<!ENTITY\s+(\w+)\s+SYSTEM\s+"([^"]+)"\s*>/g;
-  let m;
-  while ((m = entityRegex.exec(xml)) !== null) {
-    const [, name, uri] = m;
-    try {
-      entityDefs[name] = fs.readFileSync(resolveSystemPath(uri), "utf8");
-    } catch (e) {
-      entityDefs[name] = "[error: " + e.message + "]";
-    }
+function resolveVirtualFile(uri, files) {
+  const raw = String(uri).replace(/^file:\/\//i, '').replace(/^\.\//, '');
+  const name = raw.split('/').pop();
+  return Object.prototype.hasOwnProperty.call(files, name) ? files[name] : `[error: file not found: ${name}]`;
+}
+
+function expandEntities(svg, files) {
+  const entities = {};
+  let count = 0;
+  const definition = /<!ENTITY\s+([A-Za-z_][\w.-]*)\s+SYSTEM\s+["']([^"']+)["']\s*>/g;
+  let match;
+  while ((match = definition.exec(svg)) !== null && count < 12) {
+    entities[match[1]] = resolveVirtualFile(match[2], files);
+    count += 1;
   }
-  let resolved = xml;
-  Object.entries(entityDefs).forEach(([name, value]) => {
-    resolved = resolved.split("&" + name + ";").join(value);
-  });
+  let resolved = svg.slice(0, 20000);
+  for (const [name, value] of Object.entries(entities)) {
+    resolved = resolved.split(`&${name};`).join(String(value).slice(0, 8000));
+  }
   return resolved;
 }
 
 function extractTag(xml, tag) {
-  const m = xml.match(new RegExp("<" + tag + ">([\\s\\S]*?)</" + tag + ">"));
-  return m ? m[1] : null;
+  const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+  return match ? match[1].trim() : null;
 }
 
-router.get("/", (req, res) => {
-  res.render("labs/xxe-svg-upload", { svgInput: "", altText: null, error: null });
+router.get('/', (req, res) => {
+  res.render('labs/xxe-svg-upload', { svgInput: '', altText: null, error: null });
 });
 
-router.post("/", (req, res) => {
-  const svg = req.body.svg || "";
-  let altText = null, error = null;
+router.post('/', (req, res) => {
+  const svg = String(req.body.svg || '').slice(0, 20000);
+  let altText = null;
+  let error = null;
   try {
-    const resolved = vulnerableParse(svg);
-    altText = extractTag(resolved, "title");
-  } catch (e) {
-    error = "Could not process your SVG.";
+    const resolved = expandEntities(svg, virtualFiles(req));
+    altText = extractTag(resolved, 'title');
+    if (altText && !altText.includes('ZDS{')) {
+      error = null;
+    }
+  } catch {
+    error = 'Could not process your SVG.';
   }
-  res.render("labs/xxe-svg-upload", { svgInput: svg, altText, error });
+  res.render('labs/xxe-svg-upload', { svgInput: svg, altText, error });
 });
 
-router.post("/reset", (req, res) => {
-  
-  res.redirect("/labs/xxe-svg-upload");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/xxe-svg-upload');
 });
 
 module.exports = router;

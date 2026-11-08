@@ -1,36 +1,68 @@
+'use strict';
 
-const express = require("express");
-const LabFile = require("../models/LabFile");
+const express = require('express');
+const LabFile = require('../models/LabFile');
+const { proofCookie, validProof, resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  
-  res.cookie("_ga_uid", "ZDS{svg_upl04ds_ar3_x_ss_1n_d1sgu1s3}", { httpOnly: false, sameSite: "lax", encode: (v) => v });
-  
-  res.cookie("_cf_bm", "mN3pQ7rS1tU5vW9xY2aB4cD6", { httpOnly: false, sameSite: "lax" });
-  res.cookie("_ui_pref", "grid-view", { httpOnly: false, sameSite: "lax" });
-  const files = await LabFile.find({ labSlug: "svg-upload-xss" }).sort({ createdAt: -1 }).lean();
-  res.render("labs/svg-upload-xss", { files, uploaded: false });
+async function files(req) {
+  return LabFile.find({ instanceId: req.lab.instance._id, labSlug: 'svg-upload-xss' }).sort({ createdAt: -1 }).lean();
+}
+
+router.get('/', async (req, res) => {
+  proofCookie(req, res, 'zda_svg_proof', 'svg-xss');
+  const list = await files(req);
+  res.render('labs/svg-upload-xss', { files: list, uploaded: false, solved: req.lab.state.svgXssSolved === true });
 });
 
-router.post("/upload", express.text({ type: "*/*", limit: "200kb" }), async (req, res) => {
-  const filename = (req.query.filename || "upload.svg").replace(/[^a-zA-Z0-9._-]/g, "_");
-  
-  await LabFile.create({ labSlug: "svg-upload-xss", filename, contentType: "image/svg+xml", content: req.body || "" });
-  const files = await LabFile.find({ labSlug: "svg-upload-xss" }).sort({ createdAt: -1 }).lean();
-  res.render("labs/svg-upload-xss", { files, uploaded: true });
+router.post('/', express.urlencoded({ extended: false, limit: '220kb' }), async (req, res) => {
+  const filename = String(req.body.filename || 'avatar.svg').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80) || 'avatar.svg';
+  const content = String(req.body.svg || '').slice(0, 200000);
+  if (content.trim()) {
+    await LabFile.create({
+      instanceId: req.lab.instance._id,
+      labSlug: 'svg-upload-xss',
+      filename,
+      contentType: 'image/svg+xml',
+      content
+    });
+  }
+  const list = await files(req);
+  res.render('labs/svg-upload-xss', { files: list, uploaded: true, solved: req.lab.state.svgXssSolved === true });
 });
 
-router.get("/raw/:id", async (req, res) => {
-  const file = await LabFile.findById(req.params.id).lean();
-  if (!file) return res.status(404).send("Not found");
-  res.set("Content-Type", file.contentType);
+router.get('/raw/:id', async (req, res) => {
+  if (!req.params.id.match(/^[a-f0-9]{24}$/i)) return res.status(404).type('text').send('Not found');
+  const file = await LabFile.findOne({
+    _id: req.params.id,
+    instanceId: req.lab.instance._id,
+    labSlug: 'svg-upload-xss'
+  }).lean();
+  if (!file) return res.status(404).type('text').send('Not found');
+  res.set('Content-Type', 'image/svg+xml');
+  res.set('Content-Disposition', 'inline');
   res.send(file.content);
 });
 
-router.post("/reset", (req, res) => {
-  
-  res.redirect("/labs/svg-upload-xss");
+router.get('/collect', async (req, res) => {
+  const supplied = String(req.query.t || req.query.p || req.query.token || '');
+  if (!validProof(req, 'svg-xss', supplied)) {
+    return res.status(403).json({ ok: false });
+  }
+  req.lab.state.svgXssSolved = true;
+  await req.lab.save();
+  return res.json({ ok: true });
+});
+
+router.get('/status', (req, res) => {
+  const solved = req.lab.state.svgXssSolved === true;
+  res.json({ solved, flag: solved ? req.lab.flag() : null });
+});
+
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/svg-upload-xss');
 });
 
 module.exports = router;

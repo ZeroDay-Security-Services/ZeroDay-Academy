@@ -1,29 +1,42 @@
-const express = require("express");
-const router = express.Router();
+'use strict';
 
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
+const router = express.Router();
 const UNIT_PRICE = 89;
 
-function getState(req) {
-  if (!req.session.negQtyLab) req.session.negQtyLab = { balance: 0 };
-  return req.session.negQtyLab;
+function state(req) {
+  if (!req.lab.state.negativeQty) {
+    req.lab.state.negativeQty = { balance: 0 };
+  }
+  return req.lab.state.negativeQty;
 }
 
-router.get("/", (req, res) => {
-  const state = getState(req);
-  res.render("labs/logic-negative-quantity", { balance: state.balance, flag: state.balance > 500 ? "ZDS{n3g4t1v3_qu4nt1ty_turns_purch4s3s_1nt0_r3funds}" : null });
+router.get('/', (req, res) => {
+  const current = state(req);
+  res.render('labs/logic-negative-quantity', {
+    balance: current.balance,
+    flag: current.balance > 500 ? req.lab.flag() : null
+  });
 });
 
-router.post("/checkout", (req, res) => {
-  const state = getState(req);
-  const qty = parseInt(req.body.quantity, 10) || 0;
-  const total = qty * UNIT_PRICE;
-  state.balance -= total;
-  res.redirect("/labs/logic-negative-quantity");
+// Quantity is not validated as a positive integer. A negative quantity turns
+// a purchase into a credit.
+router.post('/checkout', async (req, res) => {
+  const current = state(req);
+  const quantity = Number.parseInt(req.body.quantity, 10);
+  if (Number.isFinite(quantity)) {
+    const total = quantity * UNIT_PRICE;
+    current.balance -= total;
+    await req.lab.save();
+  }
+  res.redirect('/labs/logic-negative-quantity');
 });
 
-router.post("/reset", (req, res) => {
-  req.session.negQtyLab = null;
-  res.redirect("/labs/logic-negative-quantity");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/logic-negative-quantity');
 });
 
 module.exports = router;

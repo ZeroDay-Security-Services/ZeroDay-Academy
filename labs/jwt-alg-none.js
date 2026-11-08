@@ -1,53 +1,83 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
+'use strict';
+
+const crypto = require('crypto');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-const SECRET = "zds-lab-jwt-secret-do-not-reuse";
-const FLAG = "ZDS{alg_n0ne_m3ans_n0_v3r1f1cat10n_at_all}";
-
-function b64url(obj) {
-  return Buffer.from(JSON.stringify(obj)).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+async function secret(req) {
+  if (!req.lab.state.jwtAlgNoneSecret) {
+    req.lab.state.jwtAlgNoneSecret = crypto.randomBytes(32).toString('hex');
+    await req.lab.save();
+  }
+  return req.lab.state.jwtAlgNoneSecret;
 }
 
-function vulnerableVerify(token) {
-  const [headerB64] = token.split(".");
-  const header = JSON.parse(Buffer.from(headerB64, "base64").toString("utf8"));
-
-  if (header.alg === "none") {
-    const payloadB64 = token.split(".")[1];
-    return JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
-  }
-  return jwt.verify(token, SECRET, { algorithms: ["HS256", "none"] });
+function decodePart(part) {
+  const normalized = String(part).replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(Buffer.from(normalized, 'base64').toString('utf8'));
 }
 
-router.get("/", (req, res) => {
-  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: null, error: null, flag: null });
-});
+async function vulnerableVerify(req, token) {
+  const parts = String(token).split('.');
+  if (parts.length !== 3) throw new Error('Malformed token');
 
-router.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  if (username === "guest" && password === "guest123") {
-    const userToken = jwt.sign({ username: "guest", role: "user" }, SECRET, { algorithm: "HS256", expiresIn: "1h" });
-    return res.render("labs/jwt-alg-none", { issuedToken: userToken, verifyResult: null, error: null, flag: null });
-  }
-  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: null, error: "Invalid credentials.", flag: null });
-});
-
-router.post("/verify", (req, res) => {
-  const token = (req.body.token || "").trim();
-  let verifyResult = null, error = null, flag = null;
+  let header;
   try {
-    verifyResult = vulnerableVerify(token);
-    if (verifyResult.role === "admin") flag = FLAG;
-  } catch (e) {
-    error = "Unauthorized.";
+    header = decodePart(parts[0]);
+  } catch {
+    throw new Error('Malformed header');
   }
-  res.render("labs/jwt-alg-none", { issuedToken: null, verifyResult: verifyResult ? { role: verifyResult.role } : null, error, flag });
+
+  // The vulnerable implementation trusts the algorithm declared by the client.
+  if (String(header.alg).toLowerCase() === 'none') {
+    return decodePart(parts[1]);
+  }
+
+  return jwt.verify(token, await secret(req), { algorithms: ['HS256'] });
+}
+
+router.get('/', (req, res) => {
+  res.render('labs/jwt-alg-none', { issuedToken: null, verifyResult: null, error: null, flag: null });
 });
 
-router.post("/reset", (req, res) => {
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (username === 'guest' && password === 'guest123') {
+    const token = jwt.sign({ username: 'guest', role: 'user' }, await secret(req), { algorithm: 'HS256', expiresIn: '1h' });
+    return res.render('labs/jwt-alg-none', { issuedToken: token, verifyResult: null, error: null, flag: null });
+  }
+  return res.render('labs/jwt-alg-none', { issuedToken: null, verifyResult: null, error: 'Invalid credentials.', flag: null });
+});
 
-  res.redirect("/labs/jwt-alg-none");
+router.post('/verify', async (req, res) => {
+  const token = String(req.body.token || '').trim();
+  let verifyResult = null;
+  let error = null;
+  let flag = null;
+
+  try {
+    verifyResult = await vulnerableVerify(req, token);
+    if (verifyResult && verifyResult.role === 'admin') {
+      flag = req.lab.flag();
+    }
+  } catch {
+    error = 'Unauthorized.';
+  }
+
+  return res.render('labs/jwt-alg-none', {
+    issuedToken: null,
+    verifyResult: verifyResult ? { username: verifyResult.username, role: verifyResult.role } : null,
+    error,
+    flag
+  });
+});
+
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/jwt-alg-none');
 });
 
 module.exports = router;

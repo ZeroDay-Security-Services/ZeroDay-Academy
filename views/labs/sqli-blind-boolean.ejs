@@ -10,7 +10,7 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Order Lookup</h1>
-    <p>Enter your order ID to check its status.</p>
+    <p>Enter your order ID to check its status. The page only reveals whether a row exists.</p>
     <form method="POST" action="/labs/sqli-blind-boolean/lookup">
       <label>Order ID</label>
       <input name="id" value="<%= id %>" placeholder="e.g. 1001" autocomplete="off">
@@ -23,19 +23,12 @@
   </div>
 
   <div class="lab-card">
-    <h2>Submit extracted value</h2>
-    <form method="POST" action="/labs/sqli-blind-boolean/check">
-      <label>Answer</label>
-      <input name="answer" placeholder="Enter the extracted value" autocomplete="off">
-      <button type="submit">Check</button>
-    </form>
-    <% if (checkResult) { %>
-      <div class="lab-alert <%= checkResult.correct ? 'success' : 'error' %>">
-        <%= checkResult.correct ? 'Correct!' : 'Incorrect.' %>
-        <% if (checkResult.flag) { %><br>Flag: <span class="lab-flag"><%= checkResult.flag %></span><% } %>
-      </div>
-    <% } %>
+    <h2>Blind extraction</h2>
+    <p>The numeric <code>id</code> is concatenated into <code>SELECT id FROM sqli_orders WHERE id = &lt;input&gt; AND customer = 'guest'</code>. Use a boolean predicate against <code>sqli_secrets</code>, extract the <code>blind-flag</code> one character at a time, then submit the flag from the challenge page.</p>
+    <pre class="lab-code">1 AND (SELECT unicode(substr(value,1,1)) FROM sqli_secrets WHERE label='blind-flag') &gt; 77 --</pre>
   </div>
 
+  <form method="POST" action="/labs/sqli-blind-boolean/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

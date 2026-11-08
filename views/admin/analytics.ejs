@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const maxDay = Math.max(1, ...days.map(day => Math.max(day.correct, day.incorrect, day.solves)));
+  const maxRegistrations = Math.max(1, ...days.map(day => day.registrations));
+  const maxLevel = Math.max(1, ...levelSolves.map(row => row.count));
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'analytics' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Reporting</div>
+        <h2 style="margin-bottom:0.2rem;">Analytics</h2>
+        <p class="muted-note" style="margin:0;">Last 14 days of real submission and solve records.</p>
+      </div>
+    </div>
+
+    <div class="stat-grid admin-stats">
+      <div class="glass stat"><div class="num"><%= totalUsers %></div><div class="label">Total users</div></div>
+      <div class="glass stat"><div class="num"><%= activeAccounts %></div><div class="label">Active accounts</div></div>
+      <div class="glass stat"><div class="num"><%= suspendedAccounts %></div><div class="label">Suspended accounts</div></div>
+      <div class="glass stat"><div class="num"><%= activeUsers %></div><div class="label">Active in 14 days</div></div>
+      <div class="glass stat"><div class="num"><%= successCount %></div><div class="label">Correct submissions (14d)</div></div>
+      <div class="glass stat"><div class="num"><%= failureCount %></div><div class="label">Incorrect submissions (14d)</div></div>
+      <div class="glass stat"><div class="num"><%= totalSolves %></div><div class="label">Total solves</div></div>
+      <div class="glass stat"><div class="num"><%= challengeCount %></div><div class="label">Active labs</div></div>
+      <div class="glass stat"><div class="num"><%= completionRate %></div><div class="label">Solves per user</div></div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Daily activity</h3>
+      <div class="analytics-chart">
+        <% days.forEach(day => { %>
+          <div class="analytics-day" title="<%= day.date %> — correct: <%= day.correct %>, incorrect: <%= day.incorrect %>, solves: <%= day.solves %>">
+            <div class="analytics-bars">
+              <span class="analytics-bar correct" style="height:<%= Math.max(2, Math.round((day.correct / maxDay) * 100)) %>%;"></span>
+              <span class="analytics-bar incorrect" style="height:<%= Math.max(2, Math.round((day.incorrect / maxDay) * 100)) %>%;"></span>
+              <span class="analytics-bar solves" style="height:<%= Math.max(2, Math.round((day.solves / maxDay) * 100)) %>%;"></span>
+            </div>
+            <span class="analytics-label"><%= day.date.slice(5) %></span>
+          </div>
+        <% }) %>
+      </div>
+      <div class="chart-legend">
+        <span><i class="legend-dot correct"></i> Correct submissions</span>
+        <span><i class="legend-dot incorrect"></i> Incorrect submissions</span>
+        <span><i class="legend-dot solves"></i> Solves</span>
+      </div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Registrations</h3>
+      <div class="analytics-chart">
+        <% days.forEach(day => { %>
+          <div class="analytics-day" title="<%= day.date %> — <%= day.registrations %> registrations">
+            <div class="analytics-bars">
+              <span class="analytics-bar registrations" style="height:<%= Math.max(2, Math.round((day.registrations / maxRegistrations) * 100)) %>%;"></span>
+            </div>
+            <span class="analytics-label"><%= day.date.slice(5) %></span>
+          </div>
+        <% }) %>
+      </div>
+      <div class="chart-legend"><span><i class="legend-dot registrations"></i> New accounts</span></div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Solves by level</h3>
+        <div class="bar-list">
+          <% levelSolves.forEach(row => { %>
+            <div class="bar-row">
+              <span class="level-tag level-<%= row._id %>">L<%= row._id %></span>
+              <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= Math.round((row.count / maxLevel) * 100) %>%;"></div></div>
+              <span class="mono"><%= row.count %></span>
+            </div>
+          <% }) %>
+          <% if (levelSolves.length === 0) { %><div class="empty-state">No solves recorded.</div><% } %>
+        </div>
+      </div>
+
+      <div class="glass panel">
+        <h3>Most solved labs</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Lab</th><th>Level</th><th>Solves</th></tr></thead>
+            <tbody>
+              <% topLabs.forEach(row => { %>
+                <tr>
+                  <td><a href="/challenges/<%= row.slug %>"><%= row.title %></a></td>
+                  <td><span class="level-tag level-<%= row.level %>">L<%= row.level %></span></td>
+                  <td class="mono"><%= row.count %></td>
+                </tr>
+              <% }) %>
+              <% if (topLabs.length === 0) { %><tr><td colspan="3" class="empty-state">No solves recorded.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

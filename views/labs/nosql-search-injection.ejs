@@ -10,14 +10,29 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Product Catalog</h1>
-    <p>Browse our available products.</p>
+    <form method="GET" action="/labs/nosql-search-injection">
+      <label>Product name contains</label>
+      <input name="name" value="<%= typeof query.name === 'string' ? query.name : '' %>" placeholder="e.g. wallet" autocomplete="off">
+      <label style="display:flex;gap:0.5rem;align-items:center;"><input type="checkbox" name="released" value="true" <%= query.released === undefined || query.released === 'true' ? 'checked' : '' %>> Only released products</label>
+      <button type="submit">Search</button>
+    </form>
+    <p class="lab-meta">Query parameters are passed into the Mongo filter. Try <code>?released[$ne]=true</code> to expose unreleased records.</p>
+  </div>
+
+  <div class="lab-card">
+    <h2>Results</h2>
     <ul class="lab-list">
       <% results.forEach(r => { %>
-        <li><%= r.data.name %></li>
+        <li>
+          <strong><%= r.data.name %></strong>
+          <div class="lab-meta">Released: <%= r.data.released %> · <%= r.data.price %></div>
+        </li>
       <% }) %>
-      <% if (results.length === 0) { %><li class="lab-meta">No products available.</li><% } %>
+      <% if (results.length === 0) { %><li class="lab-meta">No products matched.</li><% } %>
     </ul>
   </div>
 
+  <form method="POST" action="/labs/nosql-search-injection/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

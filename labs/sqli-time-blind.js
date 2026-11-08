@@ -1,40 +1,37 @@
+'use strict';
 
-const express = require("express");
-const db = require("../db/sqlLabDb");
+const express = require('express');
+const { getSqlDb } = require('../db/sqlLabDb');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.render("labs/sqli-time-blind", { username: "", elapsedMs: null, error: null, checkResult: null });
+router.get('/', (req, res) => {
+  res.render('labs/sqli-time-blind', { username: '', elapsedMs: null, error: null });
 });
 
-router.post("/lookup", (req, res) => {
-  const username = req.body.username || "";
-  
-  const sql = `SELECT * FROM sqli_accounts WHERE username = '${username}'`;
-  const start = Date.now();
+router.post('/lookup', (req, res) => {
+  const username = req.body.username || '';
+  const db = getSqlDb(req);
+  const sql = `SELECT id FROM sqli_accounts WHERE username = '${username}'`;
+  const start = process.hrtime.bigint();
   let error = null;
   try {
     db.prepare(sql).all();
-  } catch (e) {
-    error = "Request failed.";
+  } catch {
+    error = 'Request failed.';
   }
-  const elapsedMs = Date.now() - start;
-  res.render("labs/sqli-time-blind", { username, elapsedMs, error, checkResult: null });
-});
-
-router.post("/check", (req, res) => {
-  const answer = (req.body.answer || "").trim();
-  const row = db.prepare("SELECT value FROM sqli_secrets WHERE label = ?").get("time-flag");
-  const correct = row && answer === row.value;
-  res.render("labs/sqli-time-blind", {
-    username: "", elapsedMs: null, error: null,
-    checkResult: { correct, flag: correct ? row.value : null }
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+  res.render('labs/sqli-time-blind', {
+    username,
+    elapsedMs: Math.round(elapsedMs),
+    error
   });
 });
 
-router.post("/reset", (req, res) => {
-  
-  res.redirect("/labs/sqli-time-blind");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/sqli-time-blind');
 });
 
 module.exports = router;

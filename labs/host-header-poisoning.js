@@ -1,21 +1,30 @@
-const express = require("express");
+'use strict';
+
+const crypto = require('crypto');
+const express = require('express');
+
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.render("labs/host-header-poisoning", { link: null });
+router.get('/', (req, res) => {
+  res.render('labs/host-header-poisoning', { link: null, flag: null });
 });
 
-router.post("/request-reset", (req, res) => {
-  const host = req.headers.host;
-  const token = "rst-" + Math.random().toString(36).slice(2, 10);
+router.post('/request-reset', (req, res) => {
+  const email = String(req.body.email || '').slice(0, 160);
+  const host = String(req.get('X-Forwarded-Host') || req.get('Host') || '').slice(0, 200);
+  const token = crypto.randomBytes(12).toString('hex');
   const link = `http://${host}/reset?token=${token}`;
-  const flag = /evil-attacker\.test/.test(host) ? "ZDS{h0st_h3ad3r_p01s0ns_r3s3t_l1nks}" : null;
-  res.render("labs/host-header-poisoning", { link, flag });
+  const poisoned = /(^|\.)evil-attacker\.test(?::\d+)?$/i.test(host);
+
+  res.render('labs/host-header-poisoning', {
+    link,
+    email,
+    flag: poisoned ? req.lab.flag() : null
+  });
 });
 
-router.post("/reset", (req, res) => {
-
-  res.redirect("/labs/host-header-poisoning");
+router.post('/reset', (req, res) => {
+  res.redirect('/labs/host-header-poisoning');
 });
 
 module.exports = router;

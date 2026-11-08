@@ -10,21 +10,26 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>My Documents</h1>
+    <p class="lab-meta">Signed in as <strong>guest</strong>. Downloads are selected by numeric file ID.</p>
     <ul class="lab-list">
       <% myFiles.forEach(f => { %>
-        <li><a href="/labs/file-access-idor/download/<%= f._id %>"><%= f.filename %></a></li>
+        <li><a class="lab-link" href="/labs/file-access-idor/download/<%= f.data.id %>"><%= f.data.filename %></a></li>
       <% }) %>
     </ul>
+    <p class="lab-meta" style="margin-top:0.8rem;">Try sequential IDs. The download endpoint does not verify the owner.</p>
   </div>
 
   <% if (file) { %>
   <div class="lab-card">
     <h2><%= file.filename %></h2>
-    <pre style="white-space:pre-wrap;"><%= file.content %></pre>
+    <div class="lab-meta">Owner: <%= file.owner %> · Content-Type: <%= file.contentType %></div>
+    <pre class="lab-code" style="margin-top:0.6rem;"><%= file.content %></pre>
   </div>
   <% } %>
 
   <% if (error) { %><div class="lab-card"><div class="lab-alert error"><%= error %></div></div><% } %>
 
+  <form method="POST" action="/labs/file-access-idor/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

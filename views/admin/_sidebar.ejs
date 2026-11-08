@@ -1,0 +1,19 @@
+<aside class="admin-sidebar glass-strong">
+  <div class="admin-sidebar-head">
+    <span class="hero-eyebrow">Control plane</span>
+    <strong>Administrator</strong>
+    <span class="muted-note" style="font-size:0.76rem;">Signed in as <%= currentUser.username %></span>
+  </div>
+  <nav class="admin-nav">
+    <a href="/admin" class="admin-link <%= active === 'overview' ? 'active' : '' %>">Overview</a>
+    <a href="/admin/users" class="admin-link <%= active === 'users' ? 'active' : '' %>">Users</a>
+    <a href="/admin/labs" class="admin-link <%= active === 'labs' ? 'active' : '' %>">Labs</a>
+    <a href="/admin/submissions" class="admin-link <%= active === 'submissions' ? 'active' : '' %>">Submissions</a>
+    <a href="/admin/audit" class="admin-link <%= active === 'audit' ? 'active' : '' %>">Audit log</a>
+    <a href="/admin/analytics" class="admin-link <%= active === 'analytics' ? 'active' : '' %>">Analytics</a>
+    <a href="/admin/health" class="admin-link <%= active === 'health' ? 'active' : '' %>">System health</a>
+  </nav>
+  <div class="admin-sidebar-foot">
+    <a href="/dashboard" class="btn btn-ghost btn-sm">User dashboard</a>
+  </div>
+</aside>

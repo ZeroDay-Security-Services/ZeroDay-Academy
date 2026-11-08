@@ -5,20 +5,34 @@
 <title>SecureApp — Account</title>
 <link rel="stylesheet" href="/css/lab.css">
 </head>
-<body data-theme="clickjack">
+<body data-theme="headers">
 <div class="lab-topbar"><a class="lab-back" href="/challenges">&larr; ZeroDay Academy</a><span class="name">SecureApp</span><span class="tag">/labs/clickjacking-missing-xfo</span></div>
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Account Settings</h1>
-    <% if (deleted) { %>
-      <div class="lab-alert success">Account deleted. Flag: <span class="lab-flag">ZDS{cl1ckj4ck1ng_m1ss1ng_fr4m3_pr0t3ct10n}</span></div>
+    <% if (flag) { %>
+      <div class="lab-alert success">
+        Account deleted from a framed page. The missing X-Frame-Options header allowed the clickjack.
+        <br>Flag: <span class="lab-flag"><%= flag %></span>
+      </div>
+    <% } else if (deleted) { %>
+      <div class="lab-alert info">Account deleted from the top-level page. That is not the clickjacking proof — reset and try the attacker page.</div>
     <% } else { %>
       <p>Manage your account settings below.</p>
       <form method="POST" action="/labs/clickjacking-missing-xfo/delete-account">
-        <button type="submit" style="background:var(--danger,#dc3545);">Delete my account</button>
+        <button type="submit" class="danger">Delete my account</button>
       </form>
     <% } %>
   </div>
 
+  <div class="lab-card">
+    <h2>Attacker simulation</h2>
+    <p>Open the attacker page below. It frames this account page and places a "Claim prize" button over the delete control. Clicking the prize should delete the framed account.</p>
+    <p><a class="lab-link" href="/labs/clickjacking-missing-xfo/attacker-page" target="_blank" rel="noopener">Open attacker page &rarr;</a></p>
+    <% if (framed) { %><p class="lab-meta">This view was rendered inside the attacker's frame.</p><% } %>
+  </div>
+
+  <form method="POST" action="/labs/clickjacking-missing-xfo/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

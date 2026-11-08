@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const queryString = (page) => {
+    const params = new URLSearchParams();
+    if (filters.q) params.set('q', filters.q);
+    if (filters.role) params.set('role', filters.role);
+    if (filters.status) params.set('status', filters.status);
+    params.set('page', page);
+    return '/admin/users?' + params.toString();
+  };
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'users' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Identity</div>
+        <h2 style="margin-bottom:0.2rem;">User management</h2>
+        <p class="muted-note" style="margin:0;"><%= pages.total %> accounts · page <%= pages.page %> of <%= pages.pages %></p>
+      </div>
+    </div>
+
+    <form method="GET" action="/admin/users" class="glass panel filter-panel">
+      <div class="filter-grid">
+        <div><label>Search</label><input name="q" value="<%= filters.q || '' %>" placeholder="Username or email"></div>
+        <div><label>Role</label>
+          <select name="role">
+            <option value="">Any role</option>
+            <option value="user" <%= filters.role === 'user' ? 'selected' : '' %>>User</option>
+            <option value="admin" <%= filters.role === 'admin' ? 'selected' : '' %>>Administrator</option>
+          </select>
+        </div>
+        <div><label>Status</label>
+          <select name="status">
+            <option value="">Any status</option>
+            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="suspended" <%= filters.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+          </select>
+        </div>
+        <div class="filter-actions"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-ghost" href="/admin/users">Clear</a></div>
+      </div>
+    </form>
+
+    <div class="glass panel" style="padding:0;">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Account</th><th>Role</th><th>Status</th><th>Points</th><th>Solves</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody>
+            <% users.forEach(user => { %>
+              <tr>
+                <td>
+                  <a href="/admin/users/<%= user._id %>"><strong><%= user.username %></strong></a>
+                  <div class="muted-note" style="font-size:0.76rem;"><%= user.email %></div>
+                </td>
+                <td><span class="badge <%= user.role === 'admin' ? 'badge-advanced' : 'badge-domain' %>"><%= user.role %></span></td>
+                <td><span class="badge <%= user.status === 'active' ? 'badge-solved' : 'badge-hard' %>"><%= user.status %></span></td>
+                <td class="mono"><%= user.points %></td>
+                <td class="mono"><%= user.solveCount %></td>
+                <td class="muted-note"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <div class="inline-actions">
+                    <a class="btn btn-ghost btn-sm" href="/admin/users/<%= user._id %>">Inspect</a>
+                    <form method="POST" action="/admin/users/<%= user._id %>/role">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <select name="role" class="select-compact">
+                        <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>user</option>
+                        <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>admin</option>
+                      </select>
+                      <button class="btn btn-ghost btn-sm" type="submit">Set</button>
+                    </form>
+                    <form method="POST" action="/admin/users/<%= user._id %>/status">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="status" value="<%= user.status === 'active' ? 'suspended' : 'active' %>">
+                      <button class="btn <%= user.status === 'active' ? 'btn-danger-ghost' : 'btn-ghost' %> btn-sm" type="submit"><%= user.status === 'active' ? 'Suspend' : 'Reactivate' %></button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (users.length === 0) { %><tr><td colspan="7" class="empty-state">No users matched.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (pages.pages > 1) { %>
+      <div class="pager">
+        <% if (pages.page > 1) { %><a class="btn btn-ghost btn-sm" href="<%= queryString(pages.page - 1) %>">← Previous</a><% } %>
+        <span class="muted-note">Page <%= pages.page %> / <%= pages.pages %></span>
+        <% if (pages.page < pages.pages) { %><a class="btn btn-ghost btn-sm" href="<%= queryString(pages.page + 1) %>">Next →</a><% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

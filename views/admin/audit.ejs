@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const pageLink = (page) => {
+    const params = new URLSearchParams();
+    if (filters.severity) params.set('severity', filters.severity);
+    if (filters.action) params.set('action', filters.action);
+    params.set('page', page);
+    return '/admin/audit?' + params.toString();
+  };
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'audit' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Accountability</div>
+        <h2 style="margin-bottom:0.2rem;">Audit log</h2>
+        <p class="muted-note" style="margin:0;"><%= pages.total %> immutable events · page <%= pages.page %> of <%= pages.pages %></p>
+      </div>
+    </div>
+
+    <form method="GET" action="/admin/audit" class="glass panel filter-panel">
+      <div class="filter-grid">
+        <div><label>Action contains</label><input name="action" value="<%= filters.action || '' %>" placeholder="e.g. flag.solved"></div>
+        <div><label>Severity</label>
+          <select name="severity">
+            <option value="">Any severity</option>
+            <% ['info','warning','critical'].forEach(severity => { %><option value="<%= severity %>" <%= filters.severity === severity ? 'selected' : '' %>><%= severity %></option><% }) %>
+          </select>
+        </div>
+        <div class="filter-actions"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-ghost" href="/admin/audit">Clear</a></div>
+      </div>
+    </form>
+
+    <div class="glass panel" style="padding:0;">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Severity</th><th>Actor</th><th>Action</th><th>Target</th><th>Metadata</th><th>IP hash</th></tr></thead>
+          <tbody>
+            <% entries.forEach(entry => { %>
+              <tr>
+                <td class="muted-note"><%= new Date(entry.createdAt).toLocaleString() %></td>
+                <td><span class="badge <%= entry.severity === 'critical' ? 'badge-hard' : entry.severity === 'warning' ? 'badge-medium' : 'badge-domain' %>"><%= entry.severity %></span></td>
+                <td><%= entry.actorUsername %></td>
+                <td class="mono" style="font-size:0.78rem;"><%= entry.action %></td>
+                <td class="muted-note" style="font-size:0.76rem;"><%= entry.targetType %><% if (entry.targetId) { %> · <%= entry.targetId %><% } %></td>
+                <td class="mono muted-note" style="font-size:0.72rem;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= JSON.stringify(entry.metadata || {}) %></td>
+                <td class="mono muted-note" style="font-size:0.72rem;"><%= String(entry.ipHash || '').slice(0, 10) %>…</td>
+              </tr>
+            <% }) %>
+            <% if (entries.length === 0) { %><tr><td colspan="7" class="empty-state">No audit events matched.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (pages.pages > 1) { %>
+      <div class="pager">
+        <% if (pages.page > 1) { %><a class="btn btn-ghost btn-sm" href="<%= pageLink(pages.page - 1) %>">← Previous</a><% } %>
+        <span class="muted-note">Page <%= pages.page %> / <%= pages.pages %></span>
+        <% if (pages.page < pages.pages) { %><a class="btn btn-ghost btn-sm" href="<%= pageLink(pages.page + 1) %>">Next →</a><% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

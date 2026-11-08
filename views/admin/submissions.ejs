@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const pageLink = (page) => {
+    const params = new URLSearchParams();
+    if (filters.q) params.set('q', filters.q);
+    if (filters.result) params.set('result', filters.result);
+    params.set('page', page);
+    return '/admin/submissions?' + params.toString();
+  };
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'submissions' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Telemetry</div>
+        <h2 style="margin-bottom:0.2rem;">Flag submissions</h2>
+        <p class="muted-note" style="margin:0;"><%= pages.total %> recorded attempts · page <%= pages.page %> of <%= pages.pages %> · <%= suspiciousCount %> flagged on this page</p>
+      </div>
+    </div>
+
+    <form method="GET" action="/admin/submissions" class="glass panel filter-panel">
+      <div class="filter-grid">
+        <div><label>Search</label><input name="q" value="<%= filters.q || '' %>" placeholder="Username, lab slug or title"></div>
+        <div><label>Result</label>
+          <select name="result">
+            <option value="">Any result</option>
+            <option value="correct" <%= filters.result === 'correct' ? 'selected' : '' %>>Correct</option>
+            <option value="incorrect" <%= filters.result === 'incorrect' ? 'selected' : '' %>>Incorrect</option>
+          </select>
+        </div>
+        <div class="filter-actions"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-ghost" href="/admin/submissions">Clear</a></div>
+      </div>
+    </form>
+
+    <div class="glass panel" style="padding:0;">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>User</th><th>Lab</th><th>Result</th><th>Signals</th><th>Instance</th><th>Submitted hash</th><th>Reason</th></tr></thead>
+          <tbody>
+            <% submissions.forEach(item => { %>
+              <tr>
+                <td class="muted-note"><%= new Date(item.createdAt).toLocaleString() %></td>
+                <td><%= item.userId ? item.userId.username : 'deleted user' %></td>
+                <td>
+                  <% if (item.challengeId) { %>
+                    <strong><%= item.challengeId.title %></strong>
+                    <div class="muted-note" style="font-size:0.74rem;">L<%= item.challengeId.level %> · <%= item.challengeId.slug %></div>
+                  <% } else { %>
+                    <span class="muted-note">deleted lab</span>
+                  <% } %>
+                </td>
+                <td><span class="badge <%= item.correct ? 'badge-solved' : 'badge-hard' %>"><%= item.correct ? 'Correct' : 'Incorrect' %></span></td>
+                <td>
+                  <% if (item.suspiciousReasons.length > 0) { %>
+                    <span class="badge badge-hard" title="<%= item.suspiciousReasons.join('; ') %>">Suspicious</span>
+                    <div class="muted-note" style="font-size:0.72rem;"><%= item.suspiciousReasons.join('; ') %></div>
+                  <% } else { %>
+                    <span class="muted-note">—</span>
+                  <% } %>
+                </td>
+                <td class="mono muted-note" style="font-size:0.74rem;"><%= item.instanceId ? String(item.instanceId).slice(-8) : '—' %></td>
+                <td class="mono muted-note" style="font-size:0.74rem;"><%= String(item.submittedHash || '').slice(0, 14) %>…</td>
+                <td class="muted-note"><%= item.reason || '—' %></td>
+              </tr>
+            <% }) %>
+            <% if (submissions.length === 0) { %><tr><td colspan="8" class="empty-state">No submissions matched.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (pages.pages > 1) { %>
+      <div class="pager">
+        <% if (pages.page > 1) { %><a class="btn btn-ghost btn-sm" href="<%= pageLink(pages.page - 1) %>">← Previous</a><% } %>
+        <span class="muted-note">Page <%= pages.page %> / <%= pages.pages %></span>
+        <% if (pages.page < pages.pages) { %><a class="btn btn-ghost btn-sm" href="<%= pageLink(pages.page + 1) %>">Next →</a><% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

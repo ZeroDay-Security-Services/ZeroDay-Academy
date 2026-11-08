@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'labs' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Catalog</div>
+        <h2 style="margin-bottom:0.2rem;">Lab management</h2>
+        <p class="muted-note" style="margin:0;"><%= challenges.length %> catalog entries. Editing metadata never exposes expected flags.</p>
+      </div>
+      <form method="POST" action="/admin/labs/reseed">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-ghost" type="submit">Re-seed catalog</button>
+      </form>
+    </div>
+
+    <% if (unregistered.length > 0) { %>
+      <div class="glass panel" style="border-color:var(--red);">
+        <div class="section-head" style="margin-bottom:0.5rem;">
+          <div>
+            <h3 style="margin-bottom:0.2rem;">Mounted lab modules missing from the catalog</h3>
+            <p class="muted-note" style="margin:0;">These routers are mounted and reachable, but have no Challenge record, so they cannot be discovered or scored.</p>
+          </div>
+          <form method="POST" action="/admin/labs/register-missing">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-primary" type="submit">Register missing labs</button>
+          </form>
+        </div>
+        <ul class="lab-list">
+          <% unregistered.forEach(item => { %><li><span class="mono"><%= item.slug %></span> — <%= item.title %></li><% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form method="GET" action="/admin/labs" class="glass panel filter-panel">
+      <div class="filter-grid">
+        <div><label>Search</label><input name="q" value="<%= filters.q || '' %>" placeholder="Title, slug, domain"></div>
+        <div><label>Level</label>
+          <select name="level">
+            <option value="">All levels</option>
+            <% [1,2,3,4,5,6].forEach(level => { %><option value="<%= level %>" <%= String(filters.level || '') === String(level) ? 'selected' : '' %>>L<%= level %></option><% }) %>
+          </select>
+        </div>
+        <div><label>State</label>
+          <select name="state">
+            <option value="">Any state</option>
+            <option value="published" <%= filters.state === 'published' ? 'selected' : '' %>>Published</option>
+            <option value="hidden" <%= filters.state === 'hidden' ? 'selected' : '' %>>Hidden</option>
+            <option value="archived" <%= filters.state === 'archived' ? 'selected' : '' %>>Archived</option>
+          </select>
+        </div>
+        <div class="filter-actions"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-ghost" href="/admin/labs">Clear</a></div>
+      </div>
+    </form>
+
+    <div class="lab-admin-list">
+      <% challenges.forEach(challenge => { %>
+        <details class="glass panel lab-admin-item">
+          <summary>
+            <span class="level-tag level-<%= challenge.level %>">L<%= challenge.level %></span>
+            <span class="lab-admin-title"><strong><%= challenge.title %></strong><span class="muted-note"><%= challenge.slug %> · <%= challenge.domain %></span></span>
+            <span class="badge <%= challenge.published ? 'badge-solved' : 'badge-domain' %>"><%= challenge.published ? 'published' : 'hidden' %></span>
+            <% if (challenge.archived) { %><span class="badge badge-hard">archived</span><% } %>
+            <span class="mono muted-note"><%= challenge.solveCount %> solves · <%= challenge.activeCount %> live</span>
+          </summary>
+
+          <div class="lab-admin-body">
+            <form method="POST" action="/admin/labs/<%= challenge._id %>/update" class="form-grid">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div><label>Title</label><input name="title" value="<%= challenge.title %>" required></div>
+              <div><label>Level</label><input name="level" type="number" min="1" max="6" value="<%= challenge.level %>" required></div>
+              <div><label>Points</label><input name="points" type="number" min="0" max="5000" value="<%= challenge.points %>" required></div>
+              <div><label>Estimated minutes</label><input name="estimatedMinutes" type="number" min="1" value="<%= challenge.estimatedMinutes %>"></div>
+              <div class="form-grid-full"><button class="btn btn-primary btn-sm" type="submit">Save metadata</button></div>
+            </form>
+
+            <div class="inline-actions" style="margin-top:0.8rem;">
+              <form method="POST" action="/admin/labs/<%= challenge._id %>/visibility">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-ghost btn-sm" type="submit"><%= challenge.published ? 'Unpublish' : 'Publish' %></button>
+              </form>
+              <form method="POST" action="/admin/labs/<%= challenge._id %>/archive">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-ghost btn-sm" type="submit"><%= challenge.archived ? 'Restore' : 'Archive' %></button>
+              </form>
+              <form method="POST" action="/admin/labs/<%= challenge._id %>/reset-data" data-confirm="Reset all active instance data for this lab? Instances stay active and receive fresh lab state.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-ghost btn-sm" type="submit">Reset lab data</button>
+              </form>
+              <form method="POST" action="/admin/labs/<%= challenge._id %>/rotate-flag" data-confirm="Rotate this lab's flag version and stop all active instances?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-danger-ghost btn-sm" type="submit">Rotate flag version</button>
+              </form>
+            </div>
+            <p class="muted-note" style="margin:0.7rem 0 0;font-size:0.76rem;">Flag version: <%= challenge.flagVersion %>. Rotation invalidates every previously issued flag by changing the derived flag material and stopping active instances.</p>
+          </div>
+        </details>
+      <% }) %>
+      <% if (challenges.length === 0) { %><div class="glass empty-state">No labs matched.</div><% } %>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+<script>
+  document.querySelectorAll('form[data-confirm]').forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!confirm(form.getAttribute('data-confirm'))) event.preventDefault();
+    });
+  });
+</script>
+</body>
+</html>

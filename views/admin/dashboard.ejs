@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const maxLevel = Math.max(1, ...levelDistribution.map(row => row.total));
+  const maxDomain = Math.max(1, ...domainStats.map(row => row.total));
+  const maxRegistration = Math.max(1, ...registrationDays.map(day => day.count));
+  const successRate = stats.submissions ? Math.round(((stats.correctSubmissions / stats.submissions) * 100)) : 0;
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'overview' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Administration</div>
+        <h2 style="margin-bottom:0.2rem;">Platform overview</h2>
+        <p class="muted-note" style="margin:0;">Live data from MongoDB and the lab instance registry.</p>
+      </div>
+      <a href="/admin/health" class="btn btn-ghost">System health</a>
+    </div>
+
+    <div class="stat-grid admin-stats">
+      <div class="glass stat"><div class="num"><%= stats.users %></div><div class="label">Registered users</div></div>
+      <div class="glass stat"><div class="num"><%= stats.activeUsers %></div><div class="label">Active accounts</div></div>
+      <div class="glass stat"><div class="num"><%= stats.suspendedUsers %></div><div class="label">Suspended accounts</div></div>
+      <div class="glass stat"><div class="num"><%= stats.newUsers %></div><div class="label">New in 7 days</div></div>
+      <div class="glass stat"><div class="num"><%= stats.admins %></div><div class="label">Active admins</div></div>
+      <div class="glass stat"><div class="num"><%= stats.challenges %></div><div class="label">Published labs</div></div>
+      <div class="glass stat"><div class="num"><%= stats.correctSubmissions %></div><div class="label">Correct submissions</div></div>
+      <div class="glass stat"><div class="num"><%= stats.incorrectSubmissions %></div><div class="label">Incorrect submissions</div></div>
+      <div class="glass stat"><div class="num"><%= successRate %>%</div><div class="label">Submission success</div></div>
+      <div class="glass stat"><div class="num"><%= stats.activeInstances %></div><div class="label">Active instances</div></div>
+      <div class="glass stat"><div class="num"><%= stats.solves %></div><div class="label">Total solves</div></div>
+      <div class="glass stat"><div class="num"><%= stats.auditCount %></div><div class="label">Audit records</div></div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Labs by level</h3>
+        <div class="bar-list">
+          <% levelDistribution.forEach(row => { %>
+            <div class="bar-row">
+              <span class="level-tag level-<%= row._id %>">L<%= row._id %></span>
+              <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= Math.round((row.total / maxLevel) * 100) %>%;"></div></div>
+              <span class="mono"><%= row.total %></span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+      <div class="glass panel">
+        <h3>Labs by domain</h3>
+        <div class="bar-list">
+          <% domainStats.forEach(row => { %>
+            <div class="bar-row">
+              <span class="bar-label"><%= row._id %></span>
+              <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= Math.round((row.total / maxDomain) * 100) %>%;"></div></div>
+              <span class="mono"><%= row.total %></span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Registration trend (14 days)</h3>
+        <div class="analytics-chart">
+          <% registrationDays.forEach(day => { %>
+            <div class="analytics-day" title="<%= day.date %> — <%= day.count %> registrations">
+              <div class="analytics-bars">
+                <span class="analytics-bar registrations" style="height:<%= Math.max(2, Math.round((day.count / maxRegistration) * 100)) %>%;"></span>
+              </div>
+              <span class="analytics-label"><%= day.date.slice(5) %></span>
+            </div>
+          <% }) %>
+        </div>
+        <div class="chart-legend"><span><i class="legend-dot registrations"></i> New accounts</span></div>
+      </div>
+
+      <div class="glass panel">
+        <div class="section-head" style="margin-bottom:0.5rem;"><h3>Recent users</h3><a class="muted-note" href="/admin/users">View all →</a></div>
+        <% if (recentUsers.length === 0) { %>
+          <div class="empty-state">No users yet.</div>
+        <% } else { %>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Account</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+              <tbody>
+                <% recentUsers.forEach(user => { %>
+                  <tr>
+                    <td><a href="/admin/users/<%= user._id %>"><strong><%= user.username %></strong></a><div class="muted-note" style="font-size:0.74rem;"><%= user.email %></div></td>
+                    <td><span class="badge <%= user.role === 'admin' ? 'badge-advanced' : 'badge-domain' %>"><%= user.role %></span></td>
+                    <td><span class="badge <%= user.status === 'active' ? 'badge-solved' : 'badge-hard' %>"><%= user.status %></span></td>
+                    <td class="muted-note"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="dashboard-grid" style="grid-template-columns:1.15fr 0.85fr;">
+      <div class="glass panel">
+        <div class="section-head" style="margin-bottom:0.5rem;"><h3>Recent submissions</h3><a class="muted-note" href="/admin/submissions">View all →</a></div>
+        <% if (recentSubmissions.length === 0) { %>
+          <div class="empty-state">No submissions yet.</div>
+        <% } else { %>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>User</th><th>Lab</th><th>Result</th><th>Time</th></tr></thead>
+              <tbody>
+                <% recentSubmissions.forEach(item => { %>
+                  <tr>
+                    <td><%= item.userId ? item.userId.username : 'deleted user' %></td>
+                    <td><%= item.challengeId ? item.challengeId.title : 'deleted lab' %></td>
+                    <td><span class="badge <%= item.correct ? 'badge-solved' : 'badge-hard' %>"><%= item.correct ? 'Correct' : 'Incorrect' %></span></td>
+                    <td class="muted-note"><%= new Date(item.createdAt).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="glass panel">
+        <div class="section-head" style="margin-bottom:0.5rem;"><h3>Recent audit events</h3><a class="muted-note" href="/admin/audit">View all →</a></div>
+        <div class="audit-mini-list">
+          <% recentAudit.forEach(entry => { %>
+            <div class="audit-mini-row">
+              <span class="severity-dot severity-<%= entry.severity %>"></span>
+              <div>
+                <strong class="mono" style="font-size:0.78rem;"><%= entry.action %></strong>
+                <div class="muted-note" style="font-size:0.74rem;"><%= entry.actorUsername %> · <%= new Date(entry.createdAt).toLocaleString() %></div>
+              </div>
+            </div>
+          <% }) %>
+          <% if (recentAudit.length === 0) { %><div class="empty-state">No audit events.</div><% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

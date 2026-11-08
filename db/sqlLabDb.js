@@ -1,61 +1,112 @@
+'use strict';
 
-const path = require("path");
-const Database = require("better-sqlite3");
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { DatabaseSync } = require('node:sqlite');
 
-const db = new Database(path.join(__dirname, "sqli-labs.db"));
-db.pragma("journal_mode = WAL");
+const dataDir = path.join(__dirname, 'sql-lab-dbs');
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS sqli_accounts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user'
-);
-CREATE TABLE IF NOT EXISTS sqli_products (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  category TEXT NOT NULL,
-  price TEXT NOT NULL,
-  released INTEGER NOT NULL DEFAULT 1
-);
-CREATE TABLE IF NOT EXISTS sqli_secrets (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  label TEXT NOT NULL,
-  value TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sqli_orders (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  customer TEXT NOT NULL,
-  note TEXT NOT NULL DEFAULT ''
-);
-`);
+const cache = new Map();
 
-function seedIfEmpty() {
-  const acctCount = db.prepare("SELECT COUNT(*) c FROM sqli_accounts").get().c;
-  if (acctCount === 0) {
-    db.prepare("INSERT INTO sqli_accounts (username, password, role) VALUES (?, ?, ?)").run("admin", "K9#mP2vQx!7z", "admin");
-    db.prepare("INSERT INTO sqli_accounts (username, password, role) VALUES (?, ?, ?)").run("guest", "guest123", "user");
+function busySleep(ms) {
+  const capped = Math.max(0, Math.min(3000, Number(ms) || 0));
+  const end = Date.now() + capped;
+  while (Date.now() < end) {
+    // Intentionally blocking: the time-based lab needs a measurable delay.
   }
-  const prodCount = db.prepare("SELECT COUNT(*) c FROM sqli_products").get().c;
-  if (prodCount === 0) {
-    const insert = db.prepare("INSERT INTO sqli_products (name, category, price, released) VALUES (?, ?, ?, ?)");
-    insert.run("Titanium Lockpick Set", "Tools", "$89.00", 1);
-    insert.run("RFID Signal Blocker Wallet", "Accessories", "$24.00", 1);
-    insert.run("Faraday Laptop Sleeve", "Accessories", "$59.00", 1);
-    insert.run("Prototype Zero-Day Scanner", "Unreleased", "$1,200.00", 0);
+  return 1;
+}
+
+function seed(db, flag) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sqli_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user'
+    );
+    CREATE TABLE IF NOT EXISTS sqli_products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      price TEXT NOT NULL,
+      released INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS sqli_secrets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      label TEXT NOT NULL UNIQUE,
+      value TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS sqli_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer TEXT NOT NULL,
+      note TEXT NOT NULL DEFAULT ''
+    );
+  `);
+
+  const accounts = db.prepare('SELECT COUNT(*) AS c FROM sqli_accounts').get().c;
+  if (accounts === 0) {
+    const adminPassword = `Adm!${crypto.randomBytes(8).toString('hex')}`;
+    db.prepare('INSERT INTO sqli_accounts (username, password, role) VALUES (?, ?, ?)').run('admin', adminPassword, 'admin');
+    db.prepare('INSERT INTO sqli_accounts (username, password, role) VALUES (?, ?, ?)').run('guest', 'guest123', 'user');
   }
-  const secretCount = db.prepare("SELECT COUNT(*) c FROM sqli_secrets").get().c;
-  if (secretCount === 0) {
-    db.prepare("INSERT INTO sqli_secrets (label, value) VALUES (?, ?)").run("union-flag", "ZDS{un10n_b4s3d_sql1_3xtr4ct5_4ny_t4bl3}");
-    db.prepare("INSERT INTO sqli_secrets (label, value) VALUES (?, ?)").run("blind-flag", "ZDS{bl1nd_b00l34n_sql1_1s_sl0w_but_sur3}");
-    db.prepare("INSERT INTO sqli_secrets (label, value) VALUES (?, ?)").run("time-flag", "ZDS{t1m3_b4s3d_bl1nd_sql1_us3s_d3l4ys}");
+
+  const products = db.prepare('SELECT COUNT(*) AS c FROM sqli_products').get().c;
+  if (products === 0) {
+    const insert = db.prepare('INSERT INTO sqli_products (name, category, price, released) VALUES (?, ?, ?, ?)');
+    insert.run('Titanium Lockpick Set', 'Tools', '$89.00', 1);
+    insert.run('RFID Signal Blocker Wallet', 'Accessories', '$24.00', 1);
+    insert.run('Faraday Laptop Sleeve', 'Accessories', '$59.00', 1);
+    insert.run('Prototype Zero-Day Scanner', 'Unreleased', '$1,200.00', 0);
   }
-  const orderCount = db.prepare("SELECT COUNT(*) c FROM sqli_orders").get().c;
-  if (orderCount === 0) {
-    db.prepare("INSERT INTO sqli_orders (customer, note) VALUES (?, ?)").run("guest", "Standard shipping");
+
+  const secrets = db.prepare('SELECT COUNT(*) AS c FROM sqli_secrets').get().c;
+  if (secrets === 0) {
+    const insert = db.prepare('INSERT INTO sqli_secrets (label, value) VALUES (?, ?)');
+    insert.run('union-flag', flag);
+    insert.run('blind-flag', flag);
+    insert.run('time-flag', flag);
+  }
+
+  const orders = db.prepare('SELECT COUNT(*) AS c FROM sqli_orders').get().c;
+  if (orders === 0) {
+    db.prepare('INSERT INTO sqli_orders (customer, note) VALUES (?, ?)').run('guest', 'Standard shipping');
   }
 }
-seedIfEmpty();
 
-module.exports = db;
+function getSqlDb(req) {
+  const key = req.lab?.instance?.instanceKey;
+  if (!key) throw new Error('getSqlDb requires an active lab instance');
+  if (cache.has(key)) return cache.get(key);
+
+  const file = path.join(dataDir, `${key.replace(/[^a-f0-9]/gi, '')}.db`);
+  const db = new DatabaseSync(file);
+  db.exec('PRAGMA journal_mode = WAL;');
+  db.function('sleep', (ms) => busySleep(ms));
+  seed(db, req.lab.flag());
+  cache.set(key, db);
+
+  if (cache.size > 64) {
+    const oldest = cache.keys().next().value;
+    const oldDb = cache.get(oldest);
+    try { oldDb.close(); } catch { /* noop */ }
+    cache.delete(oldest);
+  }
+  return db;
+}
+
+function closeSqlDb(instanceKey) {
+  const db = cache.get(instanceKey);
+  if (db) {
+    try { db.close(); } catch { /* noop */ }
+    cache.delete(instanceKey);
+  }
+  const file = path.join(dataDir, `${String(instanceKey).replace(/[^a-f0-9]/gi, '')}.db`);
+  for (const suffix of ['', '-wal', '-shm']) {
+    try { fs.unlinkSync(file + suffix); } catch { /* noop */ }
+  }
+}
+
+module.exports = { getSqlDb, closeSqlDb };

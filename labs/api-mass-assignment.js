@@ -1,25 +1,38 @@
-const express = require("express");
+'use strict';
+
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-function getAccount(req) {
-  if (!req.session.apiMaAccount) req.session.apiMaAccount = { id: "acct_884", displayName: "guest_user", accountTier: "free" };
-  return req.session.apiMaAccount;
+function account(req) {
+  if (!req.lab.state.account) {
+    req.lab.state.account = { id: 'acct_884', displayName: 'guest_user', accountTier: 'free' };
+  }
+  return req.lab.state.account;
 }
 
-router.get("/", (req, res) => {
-  const account = getAccount(req);
-  res.render("labs/api-mass-assignment", { account, flag: account.accountTier === "enterprise" ? "ZDS{4p1_m4ss_4ss1gnm3nt_uns3t_t13rs}" : null });
+router.get('/', (req, res) => {
+  const current = account(req);
+  res.render('labs/api-mass-assignment', {
+    account: current,
+    flag: current.accountTier === 'enterprise' ? req.lab.flag() : null
+  });
 });
 
-router.patch("/api/account", express.json(), (req, res) => {
-  const account = getAccount(req);
-  Object.assign(account, req.body);
-  res.json(account);
+// The request body is merged into the account object without an allow-list.
+// `accountTier` should never be client-controlled.
+router.patch('/api/account', express.json(), async (req, res) => {
+  const current = account(req);
+  Object.assign(current, req.body || {});
+  req.lab.state.account = current;
+  await req.lab.save();
+  res.json(current);
 });
 
-router.post("/reset", (req, res) => {
-  req.session.apiMaAccount = null;
-  res.redirect("/labs/api-mass-assignment");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/api-mass-assignment');
 });
 
 module.exports = router;

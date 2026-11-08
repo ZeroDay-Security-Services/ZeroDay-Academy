@@ -1,43 +1,57 @@
+'use strict';
 
-const express = require("express");
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-const FAKE_METADATA = {
-  "/latest/meta-data/": "iam/\nhostname\nsecurity-credentials/\n",
-  "/latest/meta-data/iam/security-credentials/": "internal-deploy-role",
-  "/latest/meta-data/iam/security-credentials/internal-deploy-role":
-    JSON.stringify({ AccessKeyId: "AKIA_LAB_DEMO", SecretAccessKey: "ZDS{ssrf_turns_s3rv3rs_1nto_pr0xy_puppets}" }, null, 2)
-};
+function metadata(req) {
+  return {
+    '/latest/meta-data/': 'iam/\nhostname\nsecurity-credentials/\n',
+    '/latest/meta-data/hostname': 'ip-10-0-12-44.ec2.internal\n',
+    '/latest/meta-data/iam/security-credentials/': 'internal-deploy-role',
+    '/latest/meta-data/iam/security-credentials/internal-deploy-role': JSON.stringify({
+      Code: 'Success',
+      AccessKeyId: 'AKIA_LAB_DEMO',
+      SecretAccessKey: req.lab.flag(),
+      Token: 'IQoJb3JpZ2luX2VjEJr//////////wEaCXVzLWVhc3QtMQ=='
+    }, null, 2)
+  };
+}
 
-router.get("/", (req, res) => {
-  res.render("labs/ssrf-metadata", { result: null, url: "", error: null });
+router.get('/', (req, res) => {
+  res.render('labs/ssrf-metadata', { result: null, url: '', error: null });
 });
 
-router.post("/", async (req, res) => {
-  const url = (req.body.url || "").trim();
-  let result = null, error = null;
+// The URL fetcher resolves link-local metadata addresses internally. External
+// and unrelated targets are simulated; no arbitrary network request is made.
+router.post('/', (req, res) => {
+  const raw = String(req.body.url || '').trim().slice(0, 500);
+  let result = null;
+  let error = null;
 
   try {
-    const parsed = new URL(url);
-
-    if (parsed.hostname === "169.254.169.254") {
-      const body = FAKE_METADATA[parsed.pathname] || "404 not found";
-      result = { status: 200, body };
+    const parsed = new URL(raw);
+    if (parsed.hostname === '169.254.169.254') {
+      const body = metadata(req)[parsed.pathname] || '404 not found';
+      result = { status: body === '404 not found' ? 404 : 200, body };
+    } else if (parsed.hostname === 'example.com' || parsed.hostname === 'www.example.com') {
+      result = { status: 200, body: '<html><title>Example Domain</title><h1>Example Domain</h1></html>' };
+    } else if (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost') {
+      result = { status: 200, body: 'avatar-proxy: upstream request accepted' };
     } else {
-      const r = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(5000) });
-      const body = await r.text();
-      result = { status: r.status, body: body.slice(0, 2000) };
+      error = 'Could not fetch the URL.';
     }
-  } catch (e) {
-    error = "Could not fetch the URL.";
+  } catch {
+    error = 'Could not fetch the URL.';
   }
 
-  res.render("labs/ssrf-metadata", { result, url, error });
+  res.render('labs/ssrf-metadata', { result, url: raw, error });
 });
 
-router.post("/reset", (req, res) => {
-  
-  res.redirect("/labs/ssrf-metadata");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/ssrf-metadata');
 });
 
 module.exports = router;

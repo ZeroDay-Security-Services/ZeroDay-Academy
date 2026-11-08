@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<%
+  const uptime = health.uptimeSeconds;
+  const uptimeText = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s`;
+%>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'health' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Operations</div>
+        <h2 style="margin-bottom:0.2rem;">System health</h2>
+        <p class="muted-note" style="margin:0;">Runtime and database state for this process.</p>
+      </div>
+      <a href="/healthz" class="btn btn-ghost" target="_blank" rel="noopener">Public health check</a>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Database</h3>
+        <div class="mapping-grid">
+          <div><span>Mongo state</span><strong><%= health.mongoState %></strong></div>
+          <div><span>Database</span><strong><%= health.mongoName || '—' %></strong></div>
+          <div><span>Users</span><strong><%= health.users %></strong></div>
+          <div><span>Challenges</span><strong><%= health.challenges %></strong></div>
+          <div><span>Active instances</span><strong><%= health.activeInstances %></strong></div>
+          <div><span>Expired instances</span><strong><%= health.expiredInstances %></strong></div>
+          <div><span>Submissions</span><strong><%= health.submissions %></strong></div>
+          <div><span>Audit records</span><strong><%= health.auditEntries %></strong></div>
+        </div>
+      </div>
+
+      <div class="glass panel">
+        <h3>Runtime</h3>
+        <div class="mapping-grid">
+          <div><span>Environment</span><strong><%= health.environment %></strong></div>
+          <div><span>Node.js</span><strong><%= health.nodeVersion %></strong></div>
+          <div><span>Uptime</span><strong><%= uptimeText %></strong></div>
+          <div><span>RSS memory</span><strong><%= health.memoryMb %> MB</strong></div>
+          <div><span>Mounted labs</span><strong><%= health.labCount %></strong></div>
+          <div><span>Lab isolation</span><strong>Per-instance</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Operational notes</h3>
+      <ul class="objective-list">
+        <li>Expected flags are derived with HMAC and are never stored in the database.</li>
+        <li>Lab instances are scoped to one user and one challenge; flags rotate when an instance is reset.</li>
+        <li>Flag rotation stops active instances and removes their relational lab data.</li>
+        <li>Administrative actions and flag submissions are written to the immutable audit trail.</li>
+        <li>The public <code>/healthz</code> endpoint exposes only liveness and the mounted lab count.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

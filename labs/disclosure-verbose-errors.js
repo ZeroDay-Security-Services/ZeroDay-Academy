@@ -1,28 +1,38 @@
-const express = require("express");
+'use strict';
+
+const express = require('express');
+
 const router = express.Router();
 
-const INTERNAL_CONFIG = { dbHost: "internal-db.local", debugFlag: "ZDS{v3rb0s3_3rr0rs_l34k_1nt3rn4l_st4t3}" };
-
-router.get("/", (req, res) => {
-  res.render("labs/disclosure-verbose-errors", { output: null });
+router.get('/', (req, res) => {
+  res.render('labs/disclosure-verbose-errors', { output: null });
 });
 
-router.post("/lookup", (req, res) => {
+router.post('/lookup', (req, res) => {
   const id = req.body.id;
+  const config = {
+    dbHost: 'internal-db.local',
+    redisHost: 'cache.internal',
+    debugFlag: req.lab.flag()
+  };
+
   try {
-    if (typeof id !== "string" || id.trim() === "") {
-      throw new Error("Lookup failed for id=" + JSON.stringify(id) + " against config " + JSON.stringify(INTERNAL_CONFIG));
+    if (typeof id !== 'string' || id.trim() === '') {
+      throw new Error(`Lookup failed for id=${JSON.stringify(id)} against config ${JSON.stringify(config)}`);
     }
     const parsed = JSON.parse(id);
-    res.render("labs/disclosure-verbose-errors", { output: "Parsed: " + JSON.stringify(parsed) });
-  } catch (e) {
-    res.status(500).render("labs/disclosure-verbose-errors", { output: "Internal Server Error: " + e.stack });
+    return res.render('labs/disclosure-verbose-errors', {
+      output: `Record parsed successfully: ${JSON.stringify(parsed)}`
+    });
+  } catch (error) {
+    return res.status(500).render('labs/disclosure-verbose-errors', {
+      output: `Internal Server Error\n${error.stack}\n\nRuntime configuration: ${JSON.stringify(config, null, 2)}`
+    });
   }
 });
 
-router.post("/reset", (req, res) => {
-
-  res.redirect("/labs/disclosure-verbose-errors");
+router.post('/reset', (req, res) => {
+  res.redirect('/labs/disclosure-verbose-errors');
 });
 
 module.exports = router;

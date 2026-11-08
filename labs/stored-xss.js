@@ -1,68 +1,146 @@
+'use strict';
 
-const express = require("express");
-const crypto = require("crypto");
-const LabComment = require("../models/LabComment");
+const express = require('express');
+const { JSDOM, CookieJar } = require('jsdom');
+const LabComment = require('../models/LabComment');
+const LabInstance = require('../models/LabInstance');
+const { proofCookie, resetLabState } = require('./lib/lab-helpers');
+const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
+const botLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 12,
+  key: req => `stored-xss-bot:${req.user?._id || req.ip}`,
+  message: 'The moderator bot is busy. Try again shortly.'
+});
 
-function getBotSession(req) {
-  if (!req.session.storedXssBot) {
-    req.session.storedXssBot = {
-      token: "bot_sess_" + crypto.randomBytes(12).toString("hex"),
-      captured: false
-    };
-  }
-  return req.session.storedXssBot;
+async function comments(req) {
+  return LabComment.find({ instanceId: req.lab.instance._id }).sort({ createdAt: -1 }).lean();
 }
 
-router.get("/", async (req, res) => {
-  const comments = await LabComment.find().sort({ createdAt: -1 }).lean();
-  res.render("labs/stored-xss", { comments, posted: false });
+function view(req, res, extra = {}) {
+  return comments(req).then(list => res.render('labs/stored-xss', {
+    posted: false,
+    comments: list.map(comment => ({
+      author: comment.author,
+      body: comment.body,
+      created_at: new Date(comment.createdAt).toLocaleString()
+    })),
+    botResult: null,
+    flag: null,
+    ...extra
+  }));
+}
+
+router.get('/', async (req, res) => {
+  proofCookie(req, res, 'zda_bot_proof', 'stored-xss');
+  await view(req, res);
 });
 
-router.post("/", async (req, res) => {
-  const author = (req.body.author || "anonymous").slice(0, 40);
-  const body = req.body.body || "";
-  
-  await LabComment.create({ author, body });
-  const comments = await LabComment.find().sort({ createdAt: -1 }).lean();
-  res.render("labs/stored-xss", { comments, posted: true });
+router.post('/', async (req, res) => {
+  const author = String(req.body.author || 'guest').trim().slice(0, 60) || 'guest';
+  const body = String(req.body.body || '').slice(0, 4000);
+  if (body.trim()) {
+    await LabComment.create({ instanceId: req.lab.instance._id, author, body });
+  }
+  await view(req, res, { posted: true });
 });
 
-router.get("/bot-visit", async (req, res) => {
-  const bot = getBotSession(req);
-  res.cookie("_admin_csrf", bot.token, { httpOnly: false, sameSite: "lax", encode: (v) => v });
-  
-  res.cookie("_ga_track", "GA1.2.9382716450.1719430800", { httpOnly: false, sameSite: "lax" });
-  res.cookie("_ui_pref", "dark", { httpOnly: false, sameSite: "lax" });
-  const comments = await LabComment.find().sort({ createdAt: -1 }).lean();
-  res.render("labs/stored-xss", { comments, posted: false });
+router.get('/collect', async (req, res) => {
+  const supplied = String(req.query.t || req.query.p || req.query.token || '');
+  const { validProof } = require('./lib/lab-helpers');
+  if (!validProof(req, 'stored-xss', supplied)) {
+    return res.status(403).json({ ok: false });
+  }
+  req.lab.state.storedXssSolved = true;
+  await req.lab.save();
+  return res.json({ ok: true });
 });
 
-router.post("/exfil", (req, res) => {
-  const token = req.body.token || req.query.token;
-  const bot = getBotSession(req);
-  if (token && token.includes(bot.token)) bot.captured = true;
-  res.json({ received: true });
-});
-router.get("/exfil", (req, res) => {
-  const token = req.query.token;
-  const bot = getBotSession(req);
-  if (token && token.includes(bot.token)) bot.captured = true;
-  res.json({ received: true });
+router.get('/status', (req, res) => {
+  const solved = req.lab.state.storedXssSolved === true;
+  res.json({ solved, flag: solved ? req.lab.flag() : null });
 });
 
-router.get("/check", (req, res) => {
-  const bot = getBotSession(req);
-  res.json({
-    captured: bot.captured,
-    flag: bot.captured ? "ZDS{st0r3d_xss_h4rv3sts_admin_s3ss10ns}" : null
+// A server-side moderator reviews the comment queue in an isolated DOM. The
+// browser can reach only this lab origin, and it holds the proof cookie.
+router.post('/bot', botLimiter, async (req, res) => {
+  const port = req.socket.localPort;
+  const base = `http://127.0.0.1:${port}`;
+  const url = `${base}/labs/stored-xss`;
+  const proof = req.lab.proof('stored-xss');
+  const proofCookieHeader = `zda_bot_proof=${proof}`;
+  // The bot must keep the platform session so the lab gate can resolve the
+  // same per-instance lab, while adding the non-HttpOnly proof cookie.
+  const cookieHeader = [req.headers.cookie || '', proofCookieHeader]
+    .filter(Boolean)
+    .join('; ');
+  let botError = null;
+
+  try {
+    const page = await fetch(url, { headers: { Cookie: cookieHeader } });
+    const html = await page.text();
+    const jar = new CookieJar();
+    jar.setCookieSync(`${proofCookieHeader}; Path=/labs/stored-xss`, url);
+
+    const dom = new JSDOM(html, {
+      url,
+      runScripts: 'dangerously',
+      cookieJar: jar,
+      beforeParse(window) {
+        window.fetch = (input, init = {}) => {
+          let target;
+          try {
+            target = new URL(String(input), url);
+          } catch {
+            return Promise.reject(new Error('Invalid URL'));
+          }
+          if (target.origin !== base) {
+            return Promise.reject(new Error('Blocked external request'));
+          }
+          const headers = { Cookie: cookieHeader };
+          if (init.headers && typeof init.headers === 'object') {
+            Object.assign(headers, init.headers);
+          }
+          return fetch(target, {
+            method: init.method || 'GET',
+            headers,
+            body: init.body,
+            redirect: 'manual'
+          }).then(response => ({
+            ok: response.ok,
+            status: response.status,
+            text: () => response.text(),
+            json: () => response.json()
+          }));
+        };
+      }
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 450));
+    dom.window.close();
+  } catch (error) {
+    botError = error.message;
+  }
+
+  const fresh = await LabInstance.findById(req.lab.instance._id).lean();
+  const captured = fresh?.state?.storedXssSolved === true;
+  return res.render('labs/stored-xss', {
+    posted: false,
+    comments: (await comments(req)).map(comment => ({
+      author: comment.author,
+      body: comment.body,
+      created_at: new Date(comment.createdAt).toLocaleString()
+    })),
+    botResult: { captured, error: botError },
+    flag: captured ? req.lab.flag() : null
   });
 });
 
-router.post("/reset", (req, res) => {
-  req.session.storedXssBot = null;
-  res.redirect("/labs/stored-xss");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/stored-xss');
 });
 
 module.exports = router;

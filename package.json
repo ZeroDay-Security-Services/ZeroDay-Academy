@@ -1,29 +1,33 @@
 {
   "name": "zeroday-academy",
-  "version": "1.0.0",
-  "description": "ZeroDay Academy \u2014 56-lab web vulnerability training platform by ZeroDay Security Services",
+  "version": "2.0.0",
+  "description": "ZeroDay Academy — a secure, hands-on cybersecurity training platform with 56 practical labs",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "preseed": "npm rebuild better-sqlite3 || true",
     "start": "node server.js",
-    "seed": "node db/seed.js"
+    "dev": "node --watch server.js",
+    "seed": "node db/seed.js",
+    "create-admin": "node scripts/create-admin.js",
+    "qa": "node scripts/verify-all.js",
+    "test": "node scripts/verify-all.js"
   },
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.3.0",
     "connect-mongo": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^17.4.2",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "jsdom": "^31.0.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb-memory-server": "^11.3.0",
     "mongoose": "^9.8.0",
     "multer": "^1.4.5-lts.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.5.0"
   }
 }

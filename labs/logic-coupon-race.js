@@ -1,47 +1,80 @@
-const express = require("express");
-const LabCoupon = require("../models/LabCoupon");
+'use strict';
+
+const crypto = require('crypto');
+const express = require('express');
+const LabData = require('../models/LabData');
+const LabToken = require('../models/LabToken');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-async function ensureSeed() {
-  const existing = await LabCoupon.findOne({ code: "WELCOME10" });
-  if (!existing) {
-    await LabCoupon.create({ code: "WELCOME10", discountPercent: 10, usesRemaining: 1 });
+async function coupon(req) {
+  let record = await LabData.findOne({
+    instanceId: req.lab.instance._id,
+    key: 'coupon'
+  });
+  if (!record) {
+    record = await LabData.create({
+      instanceId: req.lab.instance._id,
+      userId: req.user._id,
+      challengeId: req.lab.challenge._id,
+      key: 'coupon',
+      data: { code: 'WELCOME10', discountPercent: 10, usesRemaining: 1 }
+    });
   }
+  return record;
 }
 
-function getState(req) {
-  if (!req.session.couponRaceLab) req.session.couponRaceLab = { successfulRedemptions: 0 };
-  return req.session.couponRaceLab;
+async function redemptions(req) {
+  return LabToken.countDocuments({
+    instanceId: req.lab.instance._id,
+    labSlug: 'logic-coupon-race',
+    purpose: 'coupon-redemption'
+  });
 }
 
-router.get("/", async (req, res) => {
-  await ensureSeed();
-  const coupon = await LabCoupon.findOne({ code: "WELCOME10" }).lean();
-  const state = getState(req);
-  res.render("labs/logic-coupon-race", {
-    usesRemaining: coupon.usesRemaining,
-    successfulRedemptions: state.successfulRedemptions,
-    flag: state.successfulRedemptions > 1 ? "ZDS{r4c3_c0nd1t10ns_d0ubl3_sp3nd_c0up0ns}" : null
+router.get('/', async (req, res) => {
+  const record = await coupon(req);
+  const count = await redemptions(req);
+  res.render('labs/logic-coupon-race', {
+    usesRemaining: record.data.usesRemaining,
+    successfulRedemptions: count,
+    flag: count > 1 ? req.lab.flag() : null
   });
 });
 
-router.post("/redeem", async (req, res) => {
-  await ensureSeed();
-  const state = getState(req);
-  const coupon = await LabCoupon.findOne({ code: "WELCOME10" });
-  await new Promise(r => setTimeout(r, 150));
-  if (coupon.usesRemaining > 0) {
-    coupon.usesRemaining -= 1;
-    await coupon.save();
-    state.successfulRedemptions += 1;
+// Read-check-write without a transaction or atomic guard. Two concurrent
+// redemptions can both observe usesRemaining = 1.
+router.post('/redeem', async (req, res) => {
+  const record = await coupon(req);
+  const before = record.data.usesRemaining;
+  await new Promise(resolve => setTimeout(resolve, 150));
+  let success = false;
+  if (before > 0) {
+    record.data.usesRemaining = Math.max(0, before - 1);
+    await record.save();
+    await LabToken.create({
+      instanceId: req.lab.instance._id,
+      labSlug: 'logic-coupon-race',
+      purpose: 'coupon-redemption',
+      ownerUsername: req.user.username,
+      token: crypto.randomBytes(10).toString('hex'),
+      used: false
+    });
+    success = true;
   }
-  res.json({ redeemed: coupon.usesRemaining >= 0, successfulRedemptions: state.successfulRedemptions });
+  const count = await redemptions(req);
+  res.json({
+    redeemed: success,
+    successfulRedemptions: count,
+    flag: count > 1 ? req.lab.flag() : null
+  });
 });
 
-router.post("/reset", async (req, res) => {
-  await LabCoupon.updateOne({ code: "WELCOME10" }, { $set: { usesRemaining: 1 } });
-  req.session.couponRaceLab = { successfulRedemptions: 0 };
-  res.redirect("/labs/logic-coupon-race");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  await coupon(req);
+  res.redirect('/labs/logic-coupon-race');
 });
 
 module.exports = router;

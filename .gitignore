@@ -2,6 +2,8 @@ node_modules/
 db/academy.db
 db/academy.db-wal
 db/academy.db-shm
+db/sql-lab-dbs/
+.dev-secrets.json
 *.log
 .env
 

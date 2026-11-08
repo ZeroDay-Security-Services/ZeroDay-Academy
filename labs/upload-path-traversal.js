@@ -1,38 +1,68 @@
+'use strict';
 
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const path = require('path');
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-const baseDir = path.join(__dirname, "..", "db", "upload-traversal-fs");
-const uploadsDir = path.join(baseDir, "uploads");
-const protectedDir = path.join(baseDir, "protected");
-[baseDir, uploadsDir, protectedDir].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
-if (!fs.existsSync(path.join(protectedDir, "README.txt"))) {
-  fs.writeFileSync(path.join(protectedDir, "README.txt"), "This directory should be unreachable from the uploads feature.\n");
+function virtualFiles(req) {
+  const existing = req.lab.state.fileManager;
+  if (!existing || typeof existing !== 'object') {
+    req.lab.state.fileManager = {
+      uploads: {},
+      protected: {
+        'README.txt': 'This directory is not reachable from the uploads feature.\n',
+        'flag.txt': `${req.lab.flag()}\n`
+      },
+      traversed: false
+    };
+  }
+  const manager = req.lab.state.fileManager;
+  if (!manager.uploads || typeof manager.uploads !== 'object') manager.uploads = {};
+  if (!manager.protected || typeof manager.protected !== 'object') {
+    manager.protected = {
+      'README.txt': 'This directory is not reachable from the uploads feature.\n',
+      'flag.txt': `${req.lab.flag()}\n`
+    };
+  }
+  return manager;
 }
 
-router.get("/", (req, res) => {
-  const uploaded = fs.readdirSync(uploadsDir);
-  const protectedFiles = fs.readdirSync(protectedDir);
-  const escaped = protectedFiles.some(f => f !== "README.txt");
-  res.render("labs/upload-path-traversal", {
-    uploaded, protectedFiles,
-    flag: escaped ? "ZDS{p4th_tr4v3rs4l_3sc4p3s_th3_upl04ds_f0ld3r}" : null
+router.get('/', async (req, res) => {
+  const fs = virtualFiles(req);
+  await req.lab.save();
+  res.render('labs/upload-path-traversal', {
+    uploaded: Object.keys(fs.uploads).sort(),
+    protectedFiles: fs.traversed ? Object.keys(fs.protected).sort() : [],
+    flag: fs.traversed ? req.lab.flag() : null
   });
 });
 
-router.post("/upload", express.text({ type: "*/*", limit: "10kb" }), (req, res) => {
-  const filename = req.query.filename || "file.txt";
-  const destination = path.join(uploadsDir, filename);
-  fs.writeFileSync(destination, req.body || "");
-  res.redirect("/labs/upload-path-traversal");
+// path.join resolves `../` before the write. The resulting path is not
+// constrained to the uploads directory.
+router.post('/upload', express.text({ type: '*/*', limit: '20kb' }), async (req, res) => {
+  const fs = virtualFiles(req);
+  const rawName = String(req.query.filename || 'file.txt');
+  const normalized = path.posix.normalize(rawName.replace(/\\/g, '/'));
+  const escaped = normalized.startsWith('../') || normalized.startsWith('/');
+
+  if (escaped) {
+    const name = path.posix.basename(normalized);
+    fs.protected[name] = String(req.body || '').slice(0, 20000);
+    fs.traversed = true;
+  } else {
+    const name = path.posix.basename(normalized);
+    fs.uploads[name] = String(req.body || '').slice(0, 20000);
+  }
+
+  await req.lab.save();
+  res.redirect('/labs/upload-path-traversal');
 });
 
-router.post("/reset", (req, res) => {
-  fs.readdirSync(protectedDir).forEach(f => { if (f !== "README.txt") fs.unlinkSync(path.join(protectedDir, f)); });
-  fs.readdirSync(uploadsDir).forEach(f => fs.unlinkSync(path.join(uploadsDir, f)));
-  res.redirect("/labs/upload-path-traversal");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/upload-path-traversal');
 });
 
 module.exports = router;

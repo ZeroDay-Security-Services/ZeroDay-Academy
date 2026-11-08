@@ -18,15 +18,30 @@
         <% if (flag) { %><br>Flag: <span class="lab-flag"><%= flag %></span><% } %>
       </div>
     <% } %>
+    <% if (error) { %><div class="lab-alert error"><%= error %></div><% } %>
 
     <form method="POST" action="/labs/csrf-email-change/change-email">
       <label>New email address</label>
-      <input name="email" type="email" placeholder="new@email.test">
+      <input name="email" type="email" placeholder="new@email.test" required>
       <button type="submit">Update email</button>
     </form>
   </div>
 
-  <form method="POST" action="/labs/csrf-email-change/reset"><button type="submit" class="secondary">Reset lab</button></form>
+  <div class="lab-card">
+    <h2>Attacker toolkit</h2>
+    <p>The change-email endpoint has no CSRF token. Build a page that submits a form to it, then simulate the victim visiting that page.</p>
+    <p><a class="lab-link" href="/labs/csrf-email-change/exploit" target="_blank" rel="noopener">Open hosted exploit page &rarr;</a></p>
+    <form method="POST" action="/labs/csrf-email-change/craft">
+      <label>Hosted exploit HTML</label>
+      <textarea name="html" rows="8"><%= hostedExploit %></textarea>
+      <button type="submit" class="secondary">Save exploit page</button>
+    </form>
+    <form method="POST" action="/labs/csrf-email-change/simulate-victim-visit" style="margin-top:0.75rem;">
+      <button type="submit">Simulate victim visiting the exploit</button>
+    </form>
+  </div>
 
+  <form method="POST" action="/labs/csrf-email-change/reset"><button type="submit" class="secondary">Reset lab</button></form>
+</div>
 </body>
 </html>

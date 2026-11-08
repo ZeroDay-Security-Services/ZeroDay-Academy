@@ -1,29 +1,49 @@
-const express = require("express");
+'use strict';
+
+const express = require('express');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-function getProfile(req) {
-  if (!req.session.maProfile) {
-    req.session.maProfile = { displayName: "guest_user", role: "user" };
+function profile(req) {
+  if (!req.lab.state.maProfile) {
+    req.lab.state.maProfile = { displayName: 'guest_user', role: 'user', email: 'guest@zeroday-corp.test' };
   }
-  return req.session.maProfile;
+  return req.lab.state.maProfile;
 }
 
-router.get("/", (req, res) => {
-  const profile = getProfile(req);
-  res.render("labs/mass-assignment-role", { profile, flag: profile.role === "admin" ? "ZDS{m4ss_4ss1gnm3nt_tru5ts_ev3ry_f13ld}" : null });
+function render(res, req) {
+  const current = profile(req);
+  return res.render('labs/mass-assignment-role', {
+    profile: current,
+    flag: current.role === 'admin' ? req.lab.flag() : null
+  });
+}
+
+router.get('/', (req, res) => {
+  render(res, req);
 });
 
-router.post("/update", (req, res) => {
-  const profile = getProfile(req);
+// A profile update endpoint that merges every supplied key, including role.
+router.post('/update', async (req, res) => {
+  const current = profile(req);
   let submitted = {};
-  try { submitted = JSON.parse(req.body.json || "{}"); } catch (e) { }
-  Object.assign(profile, submitted);
-  res.render("labs/mass-assignment-role", { profile, flag: profile.role === "admin" ? "ZDS{m4ss_4ss1gnm3nt_tru5ts_ev3ry_f13ld}" : null });
+  try {
+    submitted = JSON.parse(req.body.json || '{}');
+  } catch {
+    submitted = {};
+  }
+  if (submitted && typeof submitted === 'object' && !Array.isArray(submitted)) {
+    Object.assign(current, submitted);
+    req.lab.state.maProfile = current;
+    await req.lab.save();
+  }
+  render(res, req);
 });
 
-router.post("/reset", (req, res) => {
-  req.session.maProfile = null;
-  res.redirect("/labs/mass-assignment-role");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/mass-assignment-role');
 });
 
 module.exports = router;

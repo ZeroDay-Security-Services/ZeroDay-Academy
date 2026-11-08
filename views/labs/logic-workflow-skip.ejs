@@ -10,17 +10,21 @@
 <div class="lab-wrap">
   <div class="lab-card">
     <h1>Checkout Wizard</h1>
-    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-      <span style="padding:0.3rem 0.8rem;border-radius:4px;background:var(--accent);color:#fff;font-size:0.85rem;">1. Cart</span>
-      <span style="padding:0.3rem 0.8rem;border-radius:4px;background:rgba(255,255,255,0.1);font-size:0.85rem;">2. Payment</span>
-      <span style="padding:0.3rem 0.8rem;border-radius:4px;background:rgba(255,255,255,0.1);font-size:0.85rem;">3. Confirm</span>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <span class="lab-badge">1. Cart</span>
+      <span class="lab-badge">2. Payment</span>
+      <span class="lab-badge">3. Confirm</span>
     </div>
 
     <p>Cart total: <strong>$249.99</strong></p>
+    <p class="lab-meta">Payment completed: <strong><%= state.paymentCompleted %></strong> · Order confirmed: <strong><%= state.orderConfirmed %></strong></p>
 
-    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
       <form method="POST" action="/labs/logic-workflow-skip/pay">
         <button type="submit">Proceed to Payment</button>
+      </form>
+      <form method="POST" action="/labs/logic-workflow-skip/confirm">
+        <button type="submit" class="secondary">Confirm order now</button>
       </form>
     </div>
 
@@ -33,6 +37,6 @@
   </div>
 
   <form method="POST" action="/labs/logic-workflow-skip/reset"><button type="submit" class="secondary">Reset lab</button></form>
-
+</div>
 </body>
 </html>

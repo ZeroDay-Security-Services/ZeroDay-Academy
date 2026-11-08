@@ -1,42 +1,63 @@
-const express = require("express");
-const LabRecord = require("../models/LabRecord");
+'use strict';
+
+const express = require('express');
+const LabData = require('../models/LabData');
+const { resetLabState } = require('./lib/lab-helpers');
+
 const router = express.Router();
 
-async function ensureSeed() {
-  const count = await LabRecord.countDocuments({ labSlug: "nosql-regex-extraction" });
-  if (count === 0) {
-    await LabRecord.create({ labSlug: "nosql-regex-extraction", kind: "access-code", data: { code: "ZDS{r3g3x_1nj3ct10n_l34ks_byt3_by_byt3}" } });
+async function accessCode(req) {
+  let record = await LabData.findOne({ instanceId: req.lab.instance._id, key: 'access-code' });
+  if (!record) {
+    record = await LabData.create({
+      instanceId: req.lab.instance._id,
+      userId: req.user._id,
+      challengeId: req.lab.challenge._id,
+      key: 'access-code',
+      data: { code: req.lab.flag() }
+    });
   }
+  return record;
 }
 
-router.get("/", (req, res) => {
-  res.render("labs/nosql-regex-extraction", { matchResult: null, checkResult: null });
+router.get('/', async (req, res) => {
+  await accessCode(req);
+  res.render('labs/nosql-regex-extraction', { matchResult: null, checkResult: null });
 });
 
-router.post("/probe", async (req, res) => {
-  await ensureSeed();
-  const pattern = req.body.pattern || "";
+router.post('/probe', async (req, res) => {
+  await accessCode(req);
+  const pattern = String(req.body.pattern || '').slice(0, 160);
   let matched = false;
   try {
-    const doc = await LabRecord.findOne({ labSlug: "nosql-regex-extraction", "data.code": { $regex: pattern } }).lean();
-    matched = !!doc;
-  } catch (e) {
+    const record = await LabData.findOne({
+      instanceId: req.lab.instance._id,
+      key: 'access-code',
+      'data.code': { $regex: pattern }
+    }).lean();
+    matched = Boolean(record);
+  } catch {
     matched = false;
   }
-  res.render("labs/nosql-regex-extraction", { matchResult: { pattern, matched }, checkResult: null });
+  return res.render('labs/nosql-regex-extraction', {
+    matchResult: { pattern, matched },
+    checkResult: null
+  });
 });
 
-router.post("/check", async (req, res) => {
-  await ensureSeed();
-  const answer = (req.body.answer || "").trim();
-  const doc = await LabRecord.findOne({ labSlug: "nosql-regex-extraction" }).lean();
-  const correct = doc && answer === doc.data.code;
-  res.render("labs/nosql-regex-extraction", { matchResult: null, checkResult: { correct, flag: correct ? doc.data.code : null } });
+router.post('/check', async (req, res) => {
+  const record = await accessCode(req);
+  const answer = String(req.body.answer || '').trim();
+  const correct = answer === record.data.code;
+  return res.render('labs/nosql-regex-extraction', {
+    matchResult: null,
+    checkResult: { correct, flag: correct ? record.data.code : null }
+  });
 });
 
-router.post("/reset", (req, res) => {
-
-  res.redirect("/labs/nosql-regex-extraction");
+router.post('/reset', async (req, res) => {
+  await resetLabState(req);
+  res.redirect('/labs/nosql-regex-extraction');
 });
 
 module.exports = router;

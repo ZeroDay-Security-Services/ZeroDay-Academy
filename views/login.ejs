@@ -5,10 +5,12 @@
 <%- include('partials/nav') %>
 <section class="container-narrow" style="padding-top:4rem; padding-bottom:5rem;">
   <div class="glass panel">
+    <div class="hero-eyebrow">Operator access</div>
     <h2>Sign in</h2>
-    <p class="muted-note" style="margin-bottom:1.5rem;">Welcome back, hacker.</p>
+    <p class="muted-note" style="margin-bottom:1.5rem;">Resume your lab instances and progression.</p>
     <% if (error) { %><div class="form-error"><%= error %></div><% } %>
     <form method="POST" action="/login">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="next" value="<%= next %>">
       <div class="field">
         <label for="username">Username or email</label>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head><%- include('../partials/head') %></head>
+<body>
+<%- include('../partials/nav') %>
+<section class="container admin-shell">
+  <%- include('_sidebar', { active: 'users' }) %>
+  <div class="admin-main">
+    <div class="section-head">
+      <div>
+        <div class="hero-eyebrow">Identity</div>
+        <h2 style="margin-bottom:0.2rem;"><%= profile.username %></h2>
+        <p class="muted-note" style="margin:0;"><%= profile.email %> · joined <%= new Date(profile.createdAt).toLocaleString() %></p>
+      </div>
+      <a href="/admin/users" class="btn btn-ghost">← All users</a>
+    </div>
+
+    <div class="stat-grid admin-stats">
+      <div class="glass stat"><div class="num"><%= profile.points %></div><div class="label">Points</div></div>
+      <div class="glass stat"><div class="num"><%= profile.xp %></div><div class="label">XP</div></div>
+      <div class="glass stat"><div class="num"><%= solves.length %></div><div class="label">Solves</div></div>
+      <div class="glass stat"><div class="num"><%= submissionStats.total %></div><div class="label">Submissions</div></div>
+      <div class="glass stat"><div class="num"><%= submissionStats.correct %></div><div class="label">Correct</div></div>
+      <div class="glass stat"><div class="num"><%= submissionStats.incorrect %></div><div class="label">Incorrect</div></div>
+      <div class="glass stat"><div class="num"><%= instances.length %></div><div class="label">Instances</div></div>
+      <div class="glass stat"><div class="num"><%= profile.streak %></div><div class="label">Day streak</div></div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Account</h3>
+        <div class="mapping-grid">
+          <div><span>Role</span><strong><span class="badge <%= profile.role === 'admin' ? 'badge-advanced' : 'badge-domain' %>"><%= profile.role %></span></strong></div>
+          <div><span>Status</span><strong><span class="badge <%= profile.status === 'active' ? 'badge-solved' : 'badge-hard' %>"><%= profile.status %></span></strong></div>
+          <div><span>Last login</span><strong><%= profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleString() : 'Never' %></strong></div>
+          <div><span>Last active</span><strong><%= profile.lastActiveAt ? new Date(profile.lastActiveAt).toLocaleString() : '—' %></strong></div>
+          <div><span>Theme</span><strong><%= profile.preferences?.theme || 'dark' %></strong></div>
+          <div><span>Email hints</span><strong><%= profile.preferences?.emailHints ? 'Enabled' : 'Disabled' %></strong></div>
+        </div>
+        <% if (profile.bio) { %><p class="muted-note" style="margin-top:0.8rem;"><%= profile.bio %></p><% } %>
+
+        <div class="inline-actions" style="margin-top:0.9rem;">
+          <form method="POST" action="/admin/users/<%= profile._id %>/role">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <select name="role" class="select-compact">
+              <option value="user" <%= profile.role === 'user' ? 'selected' : '' %>>user</option>
+              <option value="admin" <%= profile.role === 'admin' ? 'selected' : '' %>>admin</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" type="submit">Set role</button>
+          </form>
+          <form method="POST" action="/admin/users/<%= profile._id %>/status">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="status" value="<%= profile.status === 'active' ? 'suspended' : 'active' %>">
+            <button class="btn <%= profile.status === 'active' ? 'btn-danger-ghost' : 'btn-ghost' %> btn-sm" type="submit"><%= profile.status === 'active' ? 'Suspend account' : 'Reactivate account' %></button>
+          </form>
+        </div>
+      </div>
+
+      <div class="glass panel">
+        <h3>Lab instances</h3>
+        <% if (instances.length === 0) { %>
+          <div class="empty-state">No lab instances recorded.</div>
+        <% } else { %>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Lab</th><th>Status</th><th>Reset</th><th>Last seen</th></tr></thead>
+              <tbody>
+                <% instances.forEach(instance => { %>
+                  <tr>
+                    <td><%= instance.challengeId.title %><div class="muted-note" style="font-size:0.72rem;">L<%= instance.challengeId.level %> · <%= instance.challengeId.slug %></div></td>
+                    <td><span class="badge <%= instance.status === 'active' ? 'badge-solved' : 'badge-domain' %>"><%= instance.status %></span></td>
+                    <td class="mono"><%= instance.resetCount %></td>
+                    <td class="muted-note"><%= new Date(instance.lastSeenAt).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="glass panel">
+      <h3>Solved labs</h3>
+      <% if (solves.length === 0) { %>
+        <div class="empty-state">No labs solved yet.</div>
+      <% } else { %>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Lab</th><th>Domain</th><th>Level</th><th>Points</th><th>Solved</th></tr></thead>
+            <tbody>
+              <% solves.forEach(solve => { %>
+                <tr>
+                  <td><a href="/challenges/<%= solve.challengeId.slug %>"><%= solve.challengeId.title %></a></td>
+                  <td class="muted-note"><%= solve.challengeId.domain %></td>
+                  <td><span class="level-tag level-<%= solve.challengeId.level %>">L<%= solve.challengeId.level %></span></td>
+                  <td class="mono"><%= solve.pointsAwarded %></td>
+                  <td class="muted-note"><%= new Date(solve.solvedAt).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="glass panel">
+        <h3>Recent submissions</h3>
+        <% if (submissions.length === 0) { %>
+          <div class="empty-state">No submissions recorded.</div>
+        <% } else { %>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Lab</th><th>Result</th><th>Time</th></tr></thead>
+              <tbody>
+                <% submissions.forEach(item => { %>
+                  <tr>
+                    <td><%= item.challengeId ? item.challengeId.title : 'deleted lab' %></td>
+                    <td><span class="badge <%= item.correct ? 'badge-solved' : 'badge-hard' %>"><%= item.correct ? 'Correct' : 'Incorrect' %></span></td>
+                    <td class="muted-note"><%= new Date(item.createdAt).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="glass panel">
+        <h3>Recent audit events</h3>
+        <% if (auditEntries.length === 0) { %>
+          <div class="empty-state">No audit events for this account.</div>
+        <% } else { %>
+          <div class="audit-mini-list">
+            <% auditEntries.forEach(entry => { %>
+              <div class="audit-mini-row">
+                <span class="severity-dot severity-<%= entry.severity %>"></span>
+                <div>
+                  <strong class="mono" style="font-size:0.78rem;"><%= entry.action %></strong>
+                  <div class="muted-note" style="font-size:0.74rem;"><%= entry.targetType %><%= entry.targetId ? ' · ' + entry.targetId : '' %> · <%= new Date(entry.createdAt).toLocaleString() %></div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>
